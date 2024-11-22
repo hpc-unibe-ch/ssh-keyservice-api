@@ -1,14 +1,14 @@
 import uvicorn
 from fastapi import FastAPI, Security, Depends
+from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
-from fastapi import HTTPException, WebSocketException
+from fastapi_azure_auth.user import User
 from pydantic import AnyHttpUrl, computed_field
 from pydantic_settings import BaseSettings
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi_azure_auth.user import User
 from datetime import datetime
 import logging
 import valkey as redis
