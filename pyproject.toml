@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "ssh-keyservice-api"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.8"
+cryptography = "^44.0.1"
+fastapi-azure-auth = "^5.0.1"
+valkey = "^6.1.0"
+pydantic = "^2.10.6"
+pydantic-settings = "^2.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

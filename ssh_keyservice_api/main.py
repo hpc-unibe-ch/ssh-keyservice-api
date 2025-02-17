@@ -1,9 +1,11 @@
 import uvicorn
 from fastapi import FastAPI, Security, Depends
 from fastapi import HTTPException
+from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
 from fastapi_azure_auth.user import User
+from fastapi.security.api_key import APIKeyHeader
 from pydantic import AnyHttpUrl, computed_field
 from pydantic_settings import BaseSettings
 from contextlib import asynccontextmanager
@@ -14,6 +16,12 @@ import logging
 import valkey as redis
 
 from models import SSHKeyPutRequest, SSHKeyDeleteRequest
+
+api_key_header_auth = APIKeyHeader(name="x-api-key", auto_error=True)
+
+async def api_key_auth(api_key_header: str = Security(api_key_header_auth)):
+    if api_key_header != settings.API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +37,7 @@ class Settings(BaseSettings):
     TENANT_ID: str = ""
     CLIENT_SECRET: str = ""
     SCOPE_DESCRIPTION: str = "user.read.profile"
+    API_KEY: str = ""
 
     @computed_field
     @property
@@ -170,7 +179,6 @@ async def add_user_entry(user: User = Depends(azure_scheme)):
     if not user_id:
         user_id = add_user(email)
 
-
 @app.put("/api/v1/users/{user_id}", dependencies=[Security(azure_scheme)])
 async def add_ssh_key(user_id: int, request: SSHKeyPutRequest, user: User = Depends(azure_scheme)):
     """
@@ -200,6 +208,20 @@ async def delete_ssh_key(user_id: int, request: SSHKeyDeleteRequest, user: User 
         redis_client.hdel(user_keys_key, request.ssh_key)
     else:
         raise HTTPException(status_code=404, detail=f"SSH key not found for user {user_id}: {request.ssh_key}")
+
+@app.get("/api/v1/keys/by-email/{email}", response_class=PlainTextResponse, dependencies=[Security(api_key_auth)])
+async def get_ssh_keys_by_mail(email: str):
+    """
+    Get all registered keys for a given mail address
+    """
+    user_id = redis_client.get(f"email:{email}")
+    if not user_id:
+        return ""
+    user_keys_key = f"user:{user_id}:keys"
+    ssh_keys = redis_client.hgetall(user_keys_key)
+
+    # Return keys as a plain text response
+    return "\n".join([f"{key}" for key, comment in ssh_keys.items()])
 
 if __name__ == '__main__':
     uvicorn.run('main:app', reload=True)
