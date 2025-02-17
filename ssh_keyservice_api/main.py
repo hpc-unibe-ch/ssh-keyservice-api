@@ -1,4 +1,9 @@
+#!/usr/bin/env python3
 import uvicorn
+
+import logging
+import valkey as redis
+
 from fastapi import FastAPI, Security, Depends
 from fastapi import HTTPException
 from fastapi.responses import PlainTextResponse
@@ -6,29 +11,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
 from fastapi_azure_auth.user import User
 from fastapi.security.api_key import APIKeyHeader
+
 from pydantic import AnyHttpUrl, computed_field
 from pydantic_settings import BaseSettings
+
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-
 from datetime import datetime
-import logging
-import valkey as redis
 
 from models import SSHKeyPutRequest, SSHKeyDeleteRequest
-
-api_key_header_auth = APIKeyHeader(name="x-api-key", auto_error=True)
-
-async def api_key_auth(api_key_header: str = Security(api_key_header_auth)):
-    if api_key_header != settings.API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid API Key")
-
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SSHKeyAPI")
-
-# Redis connection
-redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
 
 class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list[str | AnyHttpUrl] = ['http://localhost:8000']
@@ -38,6 +29,7 @@ class Settings(BaseSettings):
     CLIENT_SECRET: str = ""
     SCOPE_DESCRIPTION: str = "user.read.profile"
     API_KEY: str = ""
+    DB_HOST: str = "localhost"
 
     @computed_field
     @property
@@ -58,6 +50,19 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+api_key_header_auth = APIKeyHeader(name="x-api-key", auto_error=True)
+
+async def api_key_auth(api_key_header: str = Security(api_key_header_auth)):
+    if api_key_header != settings.API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("SSHKeyAPI")
+
+# Redis connection
+redis_client = redis.Redis(host=settings.DB_HOST, port=6379, decode_responses=True)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
@@ -72,6 +77,7 @@ app = FastAPI(
         'usePkceWithAuthorizationCodeGrant': True,
         'clientId': settings.OPENAPI_CLIENT_ID,
     },
+    lifespan=lifespan,
 )
 
 if settings.BACKEND_CORS_ORIGINS:
@@ -221,7 +227,7 @@ async def get_ssh_keys_by_mail(email: str):
     ssh_keys = redis_client.hgetall(user_keys_key)
 
     # Return keys as a plain text response
-    return "\n".join([f"{key}" for key, comment in ssh_keys.items()])
+    return "\n".join([f"{key}" for key, _ in ssh_keys.items()])
 
 if __name__ == '__main__':
     uvicorn.run('main:app', reload=True)
