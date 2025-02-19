@@ -14,10 +14,14 @@ fastapi-azure-auth = "^5.0.1"
 valkey = "^6.1.0"
 pydantic = "^2.10.6"
 pydantic-settings = "^2.7.1"
+cachetools = "^5.5.1"
+azure-identity = "^1.20.0"
+azure-keyvault-secrets = "^4.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
 uvicorn = "^0.34.0"
+python-dotenv = "^1.0.1"
 
 [build-system]
 requires = ["poetry-core"]

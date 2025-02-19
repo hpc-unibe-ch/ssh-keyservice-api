@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+import os
+import secrets
+import hashlib
+import logging
+
 import uvicorn
 
-import logging
 import valkey as redis
 
 from fastapi import FastAPI, Security, Depends, HTTPException
@@ -11,48 +15,61 @@ from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
 from fastapi_azure_auth.user import User
 from fastapi.security.api_key import APIKeyHeader
 
-from pydantic import AnyHttpUrl, computed_field
-from pydantic_settings import BaseSettings
-
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from datetime import datetime
 
+from cachetools import TTLCache
+
 from models import UserModel, SSHKeyPutRequest, SSHKeyDeleteRequest
 
-class Settings(BaseSettings):
-    BACKEND_CORS_ORIGINS: list[str | AnyHttpUrl] = ['http://localhost:8000']
-    OPENAPI_CLIENT_ID: str = ""
-    APP_CLIENT_ID: str = ""
-    TENANT_ID: str = ""
-    CLIENT_SECRET: str = ""
-    SCOPE_DESCRIPTION: str = "user.read.profile"
-    API_KEY: str = ""
-    DB_HOST: str = "localhost"
+from dotenv import load_dotenv
 
-    @computed_field
-    @property
-    def SCOPE_NAME(self) -> str:
-        return f'api://{self.APP_CLIENT_ID}/{self.SCOPE_DESCRIPTION}'
+#from azure.identity import DefaultAzureCredential
+#from azure.keyvault.secrets import SecretClient
+# Configure Azure Key Vault
+#KEY_VAULT_URL = os.getenv("AZURE_KEY_VAULT_URL", "https://your-keyvault-name.vault.azure.net")
+#credential = DefaultAzureCredential()
+#client = SecretClient(vault_url=KEY_VAULT_URL, credential=credential)
+#
+#def get_secret(secret_name: str) -> str:
+#    try:
+#        return client.get_secret(secret_name).value
+#    except Exception as e:
+#        raise HTTPException(status_code=500, detail=f"Error retrieving secret {secret_name}: {str(e)}")
 
-    @computed_field
-    @property
-    def SCOPES(self) -> dict:
-        return {
-            self.SCOPE_NAME: self.SCOPE_DESCRIPTION,
-        }
+# Load secrets from .env file
+def get_secret(secret_name: str) -> str:
+    try:
+        return os.getenv(secret_name)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving secret {secret_name}: {str(e)}")
 
-    class Config:
-        env_file = '.env'
-        env_file_encoding = 'utf-8'
-        case_sensitive = True
+load_dotenv()
 
-settings = Settings()
+# Load secrets
+VALID_API_KEYS = get_secret("VALID_API_KEYS")
+OPENAPI_CLIENT_ID = get_secret("OPENAPI_CLIENT_ID")
+TRUSTED_CORS_ORIGINS = get_secret("TRUSTED_CORS_ORIGINS").split(',')
+APP_CLIENT_ID = get_secret("APP_CLIENT_ID")
+TENANT_ID = get_secret("TENANT_ID")
+DB_HOST = get_secret("DB_HOST")
+SCOPE = { f'api://{APP_CLIENT_ID}/user.read.profile' : 'user.read.profile' }
+
+# Cache API keys for 10 minutes (600 seconds)
+api_key_cache = TTLCache(maxsize=1, ttl=600)
 
 api_key_header_auth = APIKeyHeader(name="x-api-key", auto_error=True)
 
+def get_api_keys():
+    """Retrieve API keys with caching to reduce Key Vault requests."""
+    if "api_keys" not in api_key_cache:
+        api_key_cache["api_keys"] = get_secret("VALID_API_KEYS").split(',')
+    return api_key_cache["api_keys"]
+
 async def api_key_auth(api_key_header: str = Security(api_key_header_auth)):
-    if api_key_header != settings.API_KEY:
+    valid_api_keys = get_api_keys()
+    if not any(secrets.compare_digest(api_key_header, key.strip()) for key in valid_api_keys):
         raise HTTPException(status_code=401, detail="Invalid API Key")
 
 # Logging setup
@@ -60,7 +77,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("SSHKeyAPI")
 
 # Redis connection
-redis_client = redis.Redis(host=settings.DB_HOST, port=6379, decode_responses=True)
+redis_client = redis.Redis(host=DB_HOST, port=6379, decode_responses=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -74,157 +91,66 @@ app = FastAPI(
     swagger_ui_oauth2_redirect_url='/oauth2-redirect',
     swagger_ui_init_oauth={
         'usePkceWithAuthorizationCodeGrant': True,
-        'clientId': settings.OPENAPI_CLIENT_ID,
+        'clientId': OPENAPI_CLIENT_ID,
     },
     lifespan=lifespan,
 )
 
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*'],
-    )
-
-azure_scheme = SingleTenantAzureAuthorizationCodeBearer(
-    app_client_id=settings.APP_CLIENT_ID,
-    tenant_id=settings.TENANT_ID,
-    scopes=settings.SCOPES,
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[str(origin) for origin in TRUSTED_CORS_ORIGINS],
+    allow_credentials=True,
+    allow_methods=["GET", "PUT", "POST", "DELETE"],
+    allow_headers=['*'], # TODO: This needs to be restricted to the required headers
 )
 
-def add_user(email):
-    """
-    Add a new user with an auto-incremented UID, email, and metadata.
-    """
-    # Check if the email is already registered
-    if redis_client.exists(f"email:{email}"):
-        raise ValueError("Email already exists.")
+azure_scheme = SingleTenantAzureAuthorizationCodeBearer(
+    app_client_id=APP_CLIENT_ID,
+    tenant_id=TENANT_ID,
+    scopes=SCOPE,
+)
 
-    # Generate a new UID
-    uid = redis_client.incr("user:id_counter")
-
-    # Create user metadata
-    user_key = f"user:{uid}"
-    redis_client.hset(user_key, mapping={
-        "email": email,
-        "created_at": datetime.utcnow().isoformat()
-    })
-
-    # Map email to UID
-    redis_client.set(f"email:{email}", uid)
-
-    print(f"User created: UID={uid}, Email={email}")
-    return uid
-
-def list_users():
-    return redis_client.smembers("users")
-
-@app.get("/", dependencies=[Security(azure_scheme)])
-async def root() -> dict[str, str]:
-    return {"message": "Hello World"}
+def generate_user_key(email: str) -> str:
+    return f"user:{hashlib.sha256(email.encode()).hexdigest()}"
 
 @app.get("/api/v1/users/me", dependencies=[Security(azure_scheme)])
-async def hello_user(user: User = Depends(azure_scheme)) -> UserModel:
-    """
-    Retrieve user metadata and SSH keys using email.
-    """
+async def get_user_info(user: User = Depends(azure_scheme)) -> UserModel:
+    """Retrieve SSH keys for authenticated user."""
     email = user.claims.get("preferred_username") or user.claims.get("email")
-    user_id = redis_client.get(f"email:{email}")
-    if not user_id:
-        user_id = add_user(email)
+    user_key = generate_user_key(email)
+    stored_keys = redis_client.hgetall(f"{user_key}:keys")
+    # Parse stored data into a structured format
+    ssh_keys = {
+        key: {"comment": value.split("|")[0], "timestamp": value.split("|")[1]} 
+        for key, value in stored_keys.items()
+    }
+    return {"email": email, "ssh_keys": ssh_keys}
 
-    print(f"User {email} has ID {user_id}")
-
-    user_key = f"user:{user_id}"
-    user_data = redis_client.hgetall(user_key)
-    user_keys_key = f"user:{user_id}:keys"
-    ssh_keys = redis_client.hgetall(user_keys_key)
-
-    return {"id": user_id, "user_data": user_data, "ssh_keys": ssh_keys}
-
-@app.get("/api/v1/users/me/id", dependencies=[Security(azure_scheme)])
-async def current_user_id(user: User = Depends(azure_scheme)) -> dict[str, int]:
-    """
-    Retrieve user id using email.
-    """
+@app.put("/api/v1/users/me/keys", dependencies=[Security(azure_scheme)])
+async def add_ssh_key(request: SSHKeyPutRequest, user: User = Depends(azure_scheme)) -> dict[str, str]:
+    """Add an SSH key for the authenticated user."""
     email = user.claims.get("preferred_username") or user.claims.get("email")
-    user_id = redis_client.get(f"email:{email}")
-    if not user_id:
-        user_id = add_user(email)
+    user_key = generate_user_key(email)
+    timestamp = datetime.utcnow().isoformat()
+    redis_client.hset(f"{user_key}:keys", request.ssh_key, f"{request.comment}|{timestamp}")
+    return {"message": "SSH key added."}
 
-    return {"id": user_id}
-
-@app.get("/api/v1/users/{user_id}", dependencies=[Security(azure_scheme)])
-async def get_ssh_keys(user_id: int, ssh_key: str | None = None, user: User = Depends(azure_scheme)) -> dict[str, str]:
+@app.delete("/api/v1/users/me/keys", dependencies=[Security(azure_scheme)])
+async def delete_ssh_key(request: SSHKeyDeleteRequest, user: User = Depends(azure_scheme)) -> dict[str, str]:
+    """Delete a specific SSH key for the authenticated user."""
     email = user.claims.get("preferred_username") or user.claims.get("email")
-    mail = redis_client.hget(f"user:{user_id}", "email")
-    if email != mail:
-        raise HTTPException(status_code=401, detail=f"User {email} is not authorized to access user {user_id}'s data.")
+    user_key = generate_user_key(email)
+    if not redis_client.hexists(f"{user_key}:keys", request.ssh_key):
+        raise HTTPException(status_code=404, detail="SSH key not found.")
+    redis_client.hdel(f"{user_key}:keys", request.ssh_key)
+    return {"message": "SSH key deleted."}
 
-    if ssh_key:
-        ssh_key_comment = redis_client.hget(f"user:{user_id}:keys", ssh_key)
-        if not ssh_key_comment:
-            raise HTTPException(status_code=404, detail=f"SSH key not found for user {user_id}: {ssh_key}")
-        return {ssh_key: ssh_key_comment}
-
-    ssh_keys = redis_client.hgetall(f"user:{user_id}:keys")
-    return ssh_keys
-
-@app.post("/api/v1/users", dependencies=[Security(azure_scheme)])
-async def add_user_entry(user: User = Depends(azure_scheme)):
-    """
-    Add a new user entry.
-    """
-    email = user.claims.get("preferred_username") or user.claims.get("email")
-    user_id = redis_client.get(f"email:{email}")
-    if not user_id:
-        user_id = add_user(email)
-
-@app.put("/api/v1/users/{user_id}", dependencies=[Security(azure_scheme)])
-async def add_ssh_key(user_id: int, request: SSHKeyPutRequest, user: User = Depends(azure_scheme)):
-    """
-    Add an SSH key and comment for a user.
-    """
-    email = user.claims.get("preferred_username") or user.claims.get("email")
-    mail = redis_client.hget(f"user:{user_id}", "email")
-    if email != mail:
-        raise HTTPException(status_code=401, detail=f"User {email} is not authorized to access user {user_id}'s data.")
-
-    redis_client.hset(f"user:{user_id}:keys", request.ssh_key, request.comment)
-    print(f"Added SSH key for user {user_id}: {request.ssh_key} -> {request.comment}")
-
-
-@app.delete("/api/v1/users/{user_id}", dependencies=[Security(azure_scheme)])
-async def delete_ssh_key(user_id: int, request: SSHKeyDeleteRequest, user: User = Depends(azure_scheme)):
-    """
-    Delete a specific SSH key for a user.
-    """
-    email = user.claims.get("preferred_username") or user.claims.get("email")
-    mail = redis_client.hget(f"user:{user_id}", "email")
-    if email != mail:
-        raise HTTPException(status_code=401, detail=f"User {email} is not authorized to access user {user_id}'s data.")
-
-    user_keys_key = f"user:{user_id}:keys"
-    if redis_client.hexists(user_keys_key, request.ssh_key):
-        redis_client.hdel(user_keys_key, request.ssh_key)
-    else:
-        raise HTTPException(status_code=404, detail=f"SSH key not found for user {user_id}: {request.ssh_key}")
-
-@app.get("/api/v1/keys/by-email/{email}", response_class=PlainTextResponse, dependencies=[Security(api_key_auth)])
+@app.get("/api/v1/users/{email}/keys", response_class=PlainTextResponse, dependencies=[Security(api_key_auth)])
 async def get_ssh_keys_by_mail(email: str) -> str:
-    """
-    Get all registered keys for a given mail address
-    """
-    user_id = redis_client.get(f"email:{email}")
-    if not user_id:
-        return ""
-    user_keys_key = f"user:{user_id}:keys"
-    ssh_keys = redis_client.hgetall(user_keys_key)
-
-    # Return keys as a plain text response
-    return "\n".join([f"{key}" for key, _ in ssh_keys.items()])
+    """Get registered SSH keys for a given email."""
+    user_key = generate_user_key(email)
+    ssh_keys = redis_client.hgetall(f"{user_key}:keys")
+    return "\n".join(ssh_keys.keys()) if ssh_keys else ""
 
 if __name__ == '__main__':
     uvicorn.run('main:app', reload=True)
