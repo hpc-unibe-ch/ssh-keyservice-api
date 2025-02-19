@@ -4,8 +4,7 @@ import uvicorn
 import logging
 import valkey as redis
 
-from fastapi import FastAPI, Security, Depends
-from fastapi import HTTPException
+from fastapi import FastAPI, Security, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
@@ -19,7 +18,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from datetime import datetime
 
-from models import SSHKeyPutRequest, SSHKeyDeleteRequest
+from models import UserModel, SSHKeyPutRequest, SSHKeyDeleteRequest
 
 class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list[str | AnyHttpUrl] = ['http://localhost:8000']
@@ -123,12 +122,11 @@ def list_users():
     return redis_client.smembers("users")
 
 @app.get("/", dependencies=[Security(azure_scheme)])
-async def root():
+async def root() -> dict[str, str]:
     return {"message": "Hello World"}
 
-# TODO: Define output schema/validator
 @app.get("/api/v1/users/me", dependencies=[Security(azure_scheme)])
-async def hello_user(user: User = Depends(azure_scheme)):
+async def hello_user(user: User = Depends(azure_scheme)) -> UserModel:
     """
     Retrieve user metadata and SSH keys using email.
     """
@@ -158,9 +156,8 @@ async def current_user_id(user: User = Depends(azure_scheme)) -> dict[str, int]:
 
     return {"id": user_id}
 
-# TODO: Define output schema/validator
 @app.get("/api/v1/users/{user_id}", dependencies=[Security(azure_scheme)])
-async def get_ssh_keys(user_id: int, ssh_key: str | None = None, user: User = Depends(azure_scheme)):# -> dict[str, str]:
+async def get_ssh_keys(user_id: int, ssh_key: str | None = None, user: User = Depends(azure_scheme)) -> dict[str, str]:
     email = user.claims.get("preferred_username") or user.claims.get("email")
     mail = redis_client.hget(f"user:{user_id}", "email")
     if email != mail:
@@ -216,7 +213,7 @@ async def delete_ssh_key(user_id: int, request: SSHKeyDeleteRequest, user: User 
         raise HTTPException(status_code=404, detail=f"SSH key not found for user {user_id}: {request.ssh_key}")
 
 @app.get("/api/v1/keys/by-email/{email}", response_class=PlainTextResponse, dependencies=[Security(api_key_auth)])
-async def get_ssh_keys_by_mail(email: str):
+async def get_ssh_keys_by_mail(email: str) -> str:
     """
     Get all registered keys for a given mail address
     """
