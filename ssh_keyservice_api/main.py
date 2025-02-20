@@ -63,7 +63,7 @@ api_key_header_auth = APIKeyHeader(name="x-api-key", auto_error=True)
 def get_api_keys():
     """Retrieve API keys with caching to reduce Key Vault requests."""
     if "api_keys" not in api_key_cache:
-        api_key_cache["api_keys"] = get_secret("VALID_API_KEYS").split(',')
+        api_key_cache["api_keys"] = get_secret("VALID-API-KEYS").split(',')
     return api_key_cache["api_keys"]
 
 async def api_key_auth(api_key_header: str = Security(api_key_header_auth)):
