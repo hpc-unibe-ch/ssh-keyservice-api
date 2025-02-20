@@ -23,8 +23,8 @@ from cachetools import TTLCache
 
 from models import UserModel, SSHKeyPutRequest, SSHKeyDeleteRequest, engine, SSHKey
 
-from dotenv import load_dotenv
-
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from azure.monitor.opentelemetry import configure_azure_monitor
 
 # Setup logger and Azure Monitor:
@@ -33,35 +33,22 @@ logger.setLevel(logging.INFO)
 if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     configure_azure_monitor()
 
-#from azure.identity import DefaultAzureCredential
-#from azure.keyvault.secrets import SecretClient
 # Configure Azure Key Vault
-#KEY_VAULT_URL = os.getenv("AZURE_KEY_VAULT_URL", "https://your-keyvault-name.vault.azure.net")
-#credential = DefaultAzureCredential()
-#client = SecretClient(vault_url=KEY_VAULT_URL, credential=credential)
-#
-#def get_secret(secret_name: str) -> str:
-#    try:
-#        return client.get_secret(secret_name).value
-#    except Exception as e:
-#        raise HTTPException(status_code=500, detail=f"Error retrieving secret {secret_name}: {str(e)}")
+KEY_VAULT_URL = os.getenv("AZURE_KEY_VAULT_URL", "https://your-keyvault-name.vault.azure.net")
+credential = DefaultAzureCredential()
+client = SecretClient(vault_url=KEY_VAULT_URL, credential=credential)
 
-# Load secrets from .env file
 def get_secret(secret_name: str) -> str:
     try:
-        return os.getenv(secret_name)
+        return client.get_secret(secret_name).value
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving secret {secret_name}: {str(e)}")
 
-load_dotenv()
-
 # Load secrets
-VALID_API_KEYS = get_secret("VALID_API_KEYS")
-OPENAPI_CLIENT_ID = get_secret("OPENAPI_CLIENT_ID")
-TRUSTED_CORS_ORIGINS = get_secret("TRUSTED_CORS_ORIGINS").split(',')
-APP_CLIENT_ID = get_secret("APP_CLIENT_ID")
-TENANT_ID = get_secret("TENANT_ID")
-DB_HOST = get_secret("DB_HOST")
+VALID_API_KEYS = get_secret("VALID-API-KEYS")
+TRUSTED_CORS_ORIGINS = get_secret("TRUSTED-CORS-ORIGINS").split(',')
+APP_CLIENT_ID = get_secret("APP-CLIENT-ID")
+TENANT_ID = get_secret("TENANT-ID")
 SCOPE = { f'api://{APP_CLIENT_ID}/user.read.profile' : 'user.read.profile' }
 
 # Dependency to get the database session
@@ -96,7 +83,7 @@ app = FastAPI(
     swagger_ui_oauth2_redirect_url='/oauth2-redirect',
     swagger_ui_init_oauth={
         'usePkceWithAuthorizationCodeGrant': True,
-        'clientId': OPENAPI_CLIENT_ID,
+        'clientId': APP_CLIENT_ID,
     },
     lifespan=lifespan,
 )
