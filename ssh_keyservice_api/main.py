@@ -6,8 +6,6 @@ import logging
 
 import uvicorn
 
-import valkey as redis
-
 from fastapi import FastAPI, Security, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,11 +17,21 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from datetime import datetime
 
+from sqlmodel import Session, select
+
 from cachetools import TTLCache
 
-from models import UserModel, SSHKeyPutRequest, SSHKeyDeleteRequest
+from models import UserModel, SSHKeyPutRequest, SSHKeyDeleteRequest, engine, SSHKey
 
 from dotenv import load_dotenv
+
+from azure.monitor.opentelemetry import configure_azure_monitor
+
+# Setup logger and Azure Monitor:
+logger = logging.getLogger("ssh_keyservice_api")
+logger.setLevel(logging.INFO)
+if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+    configure_azure_monitor()
 
 #from azure.identity import DefaultAzureCredential
 #from azure.keyvault.secrets import SecretClient
@@ -56,9 +64,13 @@ TENANT_ID = get_secret("TENANT_ID")
 DB_HOST = get_secret("DB_HOST")
 SCOPE = { f'api://{APP_CLIENT_ID}/user.read.profile' : 'user.read.profile' }
 
+# Dependency to get the database session
+def get_db_session():
+    with Session(engine) as session:
+        yield session
+
 # Cache API keys for 10 minutes (600 seconds)
 api_key_cache = TTLCache(maxsize=1, ttl=600)
-
 api_key_header_auth = APIKeyHeader(name="x-api-key", auto_error=True)
 
 def get_api_keys():
@@ -71,13 +83,6 @@ async def api_key_auth(api_key_header: str = Security(api_key_header_auth)):
     valid_api_keys = get_api_keys()
     if not any(secrets.compare_digest(api_key_header, key.strip()) for key in valid_api_keys):
         raise HTTPException(status_code=401, detail="Invalid API Key")
-
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SSHKeyAPI")
-
-# Redis connection
-redis_client = redis.Redis(host=DB_HOST, port=6379, decode_responses=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -110,46 +115,67 @@ azure_scheme = SingleTenantAzureAuthorizationCodeBearer(
     scopes=SCOPE,
 )
 
-def generate_user_key(email: str) -> str:
-    return f"user:{hashlib.sha256(email.encode()).hexdigest()}"
+def generate_user_hash(email: str) -> str:
+    return f"{hashlib.sha256(email.encode()).hexdigest()}"
 
 @app.get("/api/v1/users/me", dependencies=[Security(azure_scheme)])
-async def get_user_info(user: User = Depends(azure_scheme)) -> UserModel:
+async def get_user_info(user: User = Depends(azure_scheme), session: Session = Depends(get_db_session)) -> UserModel:
     """Retrieve SSH keys for authenticated user."""
     email = user.claims.get("preferred_username") or user.claims.get("email")
-    user_key = generate_user_key(email)
-    stored_keys = redis_client.hgetall(f"{user_key}:keys")
-    # Parse stored data into a structured format
-    ssh_keys = {
-        key: {"comment": value.split("|")[0], "timestamp": value.split("|")[1]} 
-        for key, value in stored_keys.items()
-    }
+    user_hash = generate_user_hash(email)
+
+    # Fetch SSH keys from the database
+    results = session.exec(select(SSHKey).filter(SSHKey.user_hash == user_hash)).all()
+
+    ssh_keys = {}
+    for key in results:
+        ssh_keys.update({key.ssh_key: {"comment": key.comment, "timestamp": key.timestamp}})
+
     return {"email": email, "ssh_keys": ssh_keys}
 
 @app.put("/api/v1/users/me/keys", dependencies=[Security(azure_scheme)])
-async def add_ssh_key(request: SSHKeyPutRequest, user: User = Depends(azure_scheme)) -> dict[str, str]:
+async def add_ssh_key( request: SSHKeyPutRequest, user: User = Depends(azure_scheme), session: Session = Depends(get_db_session)) -> dict[str, str]:
     """Add an SSH key for the authenticated user."""
     email = user.claims.get("preferred_username") or user.claims.get("email")
-    user_key = generate_user_key(email)
+    user_hash = generate_user_hash(email)
     timestamp = datetime.utcnow().isoformat()
-    redis_client.hset(f"{user_key}:keys", request.ssh_key, f"{request.comment}|{timestamp}")
+
+    ssh_key = SSHKey()
+    ssh_key.ssh_key = request.ssh_key
+    ssh_key.user_hash = user_hash
+    ssh_key.comment = request.comment
+    ssh_key.timestamp = timestamp
+    session.add(ssh_key)
+    session.commit()
+    session.refresh(ssh_key)
+
     return {"message": "SSH key added."}
 
 @app.delete("/api/v1/users/me/keys", dependencies=[Security(azure_scheme)])
-async def delete_ssh_key(request: SSHKeyDeleteRequest, user: User = Depends(azure_scheme)) -> dict[str, str]:
+async def delete_ssh_key(request: SSHKeyDeleteRequest, user: User = Depends(azure_scheme), session: Session = Depends(get_db_session)) -> dict[str, str]:
     """Delete a specific SSH key for the authenticated user."""
     email = user.claims.get("preferred_username") or user.claims.get("email")
-    user_key = generate_user_key(email)
-    if not redis_client.hexists(f"{user_key}:keys", request.ssh_key):
+    user_hash = generate_user_hash(email)
+
+    ssh_key = session.exec(select(SSHKey).filter(SSHKey.user_hash == user_hash, SSHKey.ssh_key == request.ssh_key)).first()
+    if not ssh_key:
         raise HTTPException(status_code=404, detail="SSH key not found.")
-    redis_client.hdel(f"{user_key}:keys", request.ssh_key)
+    session.delete(ssh_key)
+    session.commit()
+
     return {"message": "SSH key deleted."}
 
 @app.get("/api/v1/users/{email}/keys", response_class=PlainTextResponse, dependencies=[Security(api_key_auth)])
-async def get_ssh_keys_by_mail(email: str) -> str:
+async def get_ssh_keys_by_mail(email: str, session: Session = Depends(get_db_session)) -> str:
     """Get registered SSH keys for a given email."""
-    user_key = generate_user_key(email)
-    ssh_keys = redis_client.hgetall(f"{user_key}:keys")
+    user_hash = generate_user_hash(email)
+
+    results = session.exec(select(SSHKey).filter(SSHKey.user_hash == user_hash)).all()
+
+    ssh_keys = {}
+    for key in results:
+        ssh_keys.update({key.ssh_key: {"comment": key.comment, "timestamp": key.timestamp}})
+
     return "\n".join(ssh_keys.keys()) if ssh_keys else ""
 
 if __name__ == '__main__':
