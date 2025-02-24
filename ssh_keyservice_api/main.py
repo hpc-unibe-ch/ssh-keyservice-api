@@ -17,7 +17,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from datetime import datetime
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 
 from cachetools import TTLCache
 
@@ -105,6 +105,10 @@ azure_scheme = SingleTenantAzureAuthorizationCodeBearer(
 def generate_user_hash(email: str) -> str:
     return f"{hashlib.sha256(email.encode()).hexdigest()}"
 
+def get_count(session, model, filter_):
+    count_query = select(func.count()).where(filter_)
+    return session.exec(count_query).one()
+
 @app.get("/api/v1/users/me", dependencies=[Security(azure_scheme)])
 async def get_user_info(user: User = Depends(azure_scheme), session: Session = Depends(get_db_session)) -> UserModel:
     """Retrieve SSH keys for authenticated user."""
@@ -126,6 +130,15 @@ async def add_ssh_key( request: SSHKeyPutRequest, user: User = Depends(azure_sch
     email = user.claims.get("preferred_username") or user.claims.get("email")
     user_hash = generate_user_hash(email)
     timestamp = datetime.utcnow().isoformat()
+
+    max_keys = int(os.getenv("API_MAX_KEYS_PER_USER", 5))
+    key_count = get_count(session, SSHKey, SSHKey.user_hash == user_hash)
+    if key_count >= max_keys:
+        raise HTTPException(status_code=403, detail=f"Maximum number of SSH keys per user reached ({max_keys}).")
+
+    existing_key = session.exec(select(SSHKey).filter(SSHKey.user_hash == user_hash, SSHKey.ssh_key == request.ssh_key)).first()
+    if existing_key:
+        raise HTTPException(status_code=409, detail="SSH key already exists.")
 
     ssh_key = SSHKey()
     ssh_key.ssh_key = request.ssh_key
