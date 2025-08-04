@@ -526,14 +526,14 @@ standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "htt
 
 [[package]]
 name = "fastapi-azure-auth"
-version = "5.1.1"
+version = "5.2.0"
 description = "Easy and secure implementation of Azure Entra ID for your FastAPI APIs"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
 files = [
-    {file = "fastapi_azure_auth-5.1.1-py3-none-any.whl", hash = "sha256:13c735b98be5f8154b4898242a1783d90505d4485cce648a908d844b2df81da4"},
-    {file = "fastapi_azure_auth-5.1.1.tar.gz", hash = "sha256:eb3849c2adcd8654024ba2de908063ac158e4e847c2eadcb2cf1ed4fa55e3d78"},
+    {file = "fastapi_azure_auth-5.2.0-py3-none-any.whl", hash = "sha256:f2353ce005987b95c2f1ab82e77d44e3be6d419cb5e63b98ac4e17fdf2355b77"},
+    {file = "fastapi_azure_auth-5.2.0.tar.gz", hash = "sha256:8f86ef2c6d38cea12f343a0b18533026e6143c9df928ac8529a32cdbbdfe3991"},
 ]
 
 [package.dependencies]
@@ -2350,4 +2350,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "24df7c8c82e3a2d4037943b95de88318be255aa35c3f09564643da95c0438492"
+content-hash = "9b991b001dcd5b8fde56ec7be2bba0d2f237cc850cbb1d73322c99f87f9a4c99"
