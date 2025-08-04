@@ -123,49 +123,50 @@ typing-extensions = ">=4.0.1"
 
 [[package]]
 name = "azure-monitor-opentelemetry"
-version = "1.6.5"
+version = "1.6.13"
 description = "Microsoft Azure Monitor Opentelemetry Distro Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure_monitor_opentelemetry-1.6.5-py3-none-any.whl", hash = "sha256:9e04fe20db099765ad17a4542ee89dccc59ef152b9c279d45c4e2148d020bb44"},
-    {file = "azure_monitor_opentelemetry-1.6.5.tar.gz", hash = "sha256:5a25b0748b0f5785d7ed8141019125574984d78b8ca0ae8fe11849bf514a1331"},
+    {file = "azure_monitor_opentelemetry-1.6.13-py3-none-any.whl", hash = "sha256:c6a5b0b73b5639054675aec2a8f215cdb6b7d1e5cb21d93188bbdd55673eca30"},
+    {file = "azure_monitor_opentelemetry-1.6.13.tar.gz", hash = "sha256:59b1b01e64318d78f0d2909c8fa9b3008dbf88e7ea6e491d2042afa5bbe94971"},
 ]
 
 [package.dependencies]
 azure-core = ">=1.28.0,<2.0.0"
 azure-core-tracing-opentelemetry = ">=1.0.0b11,<1.1.0"
-azure-monitor-opentelemetry-exporter = ">=1.0.0b31,<1.1.0"
-opentelemetry-instrumentation-django = ">=0.49b0,<1.0"
-opentelemetry-instrumentation-fastapi = ">=0.49b0,<1.0"
-opentelemetry-instrumentation-flask = ">=0.49b0,<1.0"
-opentelemetry-instrumentation-psycopg2 = ">=0.49b0,<1.0"
-opentelemetry-instrumentation-requests = ">=0.49b0,<1.0"
-opentelemetry-instrumentation-urllib = ">=0.49b0,<1.0"
-opentelemetry-instrumentation-urllib3 = ">=0.49b0,<1.0"
-opentelemetry-resource-detector-azure = ">=0.1.4,<0.2.0"
-opentelemetry-sdk = ">=1.28,<2.0"
+azure-monitor-opentelemetry-exporter = ">=1.0.0b40,<1.1.0"
+opentelemetry-instrumentation-django = ">=0.57b0,<1.0"
+opentelemetry-instrumentation-fastapi = ">=0.57b0,<1.0"
+opentelemetry-instrumentation-flask = ">=0.57b0,<1.0"
+opentelemetry-instrumentation-psycopg2 = ">=0.57b0,<1.0"
+opentelemetry-instrumentation-requests = ">=0.57b0,<1.0"
+opentelemetry-instrumentation-urllib = ">=0.57b0,<1.0"
+opentelemetry-instrumentation-urllib3 = ">=0.57b0,<1.0"
+opentelemetry-resource-detector-azure = ">=0.1.5,<0.2.0"
+opentelemetry-sdk = ">=1.36.0,<1.37.0"
 
 [[package]]
 name = "azure-monitor-opentelemetry-exporter"
-version = "1.0.0b35"
+version = "1.0.0b41"
 description = "Microsoft Azure Monitor Opentelemetry Exporter Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure_monitor_opentelemetry_exporter-1.0.0b35-py2.py3-none-any.whl", hash = "sha256:93c8824f6c2589905159b4c27640f4be65ce96e1b51959b6b32ea63f518c3944"},
-    {file = "azure_monitor_opentelemetry_exporter-1.0.0b35.tar.gz", hash = "sha256:5ecc1c502485ede7a11ccc9ef9370abf6ec4b0431ebec77dab25d568d018f04f"},
+    {file = "azure_monitor_opentelemetry_exporter-1.0.0b41-py2.py3-none-any.whl", hash = "sha256:cbba629cca53e0e33416c61e08ebaabe833e740cfbfd7f2e9151821f92c66a51"},
+    {file = "azure_monitor_opentelemetry_exporter-1.0.0b41.tar.gz", hash = "sha256:b363e6f89c0dee16d02782a310a60d626e4c081ef49d533ff5225a40cbab12cc"},
 ]
 
 [package.dependencies]
 azure-core = ">=1.28.0,<2.0.0"
+azure-identity = ">=1.17,<2.0"
 fixedint = "0.1.6"
 msrest = ">=0.6.10"
-opentelemetry-api = ">=1.26,<2.0"
-opentelemetry-sdk = ">=1.26,<2.0"
-psutil = ">=5.9,<7"
+opentelemetry-api = ">=1.35,<2.0"
+opentelemetry-sdk = ">=1.35,<2.0"
+psutil = ">=5.9,<8"
 
 [[package]]
 name = "cachetools"
@@ -2350,4 +2351,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "24df7c8c82e3a2d4037943b95de88318be255aa35c3f09564643da95c0438492"
+content-hash = "7f980a646e4742ca2ced617c85331d36bee7bce02d2bdd9968427afa87dbdc25"
