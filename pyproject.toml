@@ -12,7 +12,7 @@ fastapi = {extras = ["standard"], version = "^0.116.1"}
 cryptography = "^44.0.1"
 fastapi-azure-auth = "^5.2.0"
 pydantic = "^2.10.6"
-pydantic-settings = "^2.10.1"
+pydantic-settings = "^2.11.0"
 cachetools = "^6.2.0"
 azure-identity = "^1.23.1"
 azure-keyvault-secrets = "^4.9.0"
