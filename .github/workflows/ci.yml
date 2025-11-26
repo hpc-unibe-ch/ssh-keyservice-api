@@ -75,6 +75,7 @@ jobs:
           -backend-config="storage_account_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
           -backend-config="container_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}" \
           -backend-config="key=terraform.tfstate"
+        working-directory: terraform
 
       - name: Terraform Plan
         id: plan
@@ -83,6 +84,7 @@ jobs:
           plan \
           -out=tfplan \
           -input=false
+        working-directory: terraform
 
       - name: Terraform Summary
         run: |
@@ -95,3 +97,4 @@ jobs:
           echo "<pre><samp>" >> $GITHUB_STEP_SUMMARY
           terraform show tfplan -no-color >> $GITHUB_STEP_SUMMARY
           echo "</samp></pre>" >> $GITHUB_STEP_SUMMARY
+        working-directory: terraform
