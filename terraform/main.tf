@@ -35,3 +35,26 @@ resource "azurerm_virtual_network" "example" {
     environment = "Production"
   }
 }
+
+resource "azurerm_app_service_plan" "sshkeyservice" {
+  name                = "asp-sshkeyservice"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  kind                = "Linux"
+  reserved            = true
+
+  sku {
+    tier = "Standard"
+    size = "B1"
+  }
+}
+
+resource "azurerm_private_dns_zone" "1" {
+  name                = "privatelink.postgres.database.azure.com"
+  resource_group_name = azurerm_resource_group.this.name
+}
+
+resource "azurerm_private_dns_zone" "2" {
+  name                = "privatelink.redis.cache.windows.net"
+  resource_group_name = azurerm_resource_group.this.name
+}
