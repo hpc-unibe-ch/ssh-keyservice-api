@@ -87,4 +87,3 @@ jobs:
         with:
           app-name: 'ssh-key-api-dev'
           slot-name: 'Production'
-

@@ -10,7 +10,7 @@ repos:
       - id: trailing-whitespace
         stages: [pre-commit]
       - id: end-of-file-fixer
-        exclude: /secrets
+        exclude: '(/secrets|/ssh_keyservice_api)'
         stages: [pre-commit]
       - id: check-added-large-files
         stages: [pre-commit]
@@ -23,6 +23,7 @@ repos:
       - id: check-toml
         stages: [pre-commit]
       - id: check-shebang-scripts-are-executable
+        exclude: '(/ssh_keyservice_api|entrypoint\.sh)'
         stages: [pre-commit]
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
