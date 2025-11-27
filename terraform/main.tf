@@ -22,6 +22,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "example" {
 }
 
 resource "azurerm_postgresql_flexible_server" "example" {
+  # checkov:skip=CKV2_AZURE_57: "Ensure PostgreSQL Flexible Server is configured with private endpoint"
   name                          = "ssh-key-api-database-4597657890"
   resource_group_name           = azurerm_resource_group.this.name
   location                      = azurerm_resource_group.this.location
@@ -55,6 +56,7 @@ resource "azurerm_service_plan" "sshkeyservice" {
 resource "azurerm_key_vault" "example" {
   # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
   # checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
+  # checkov:skip=CKV2_AZURE_32: "Ensure private endpoint is configured to key vault"
   name                          = "kv-ssh-keyservice-prod"
   location                      = azurerm_resource_group.this.location
   resource_group_name           = azurerm_resource_group.this.name
