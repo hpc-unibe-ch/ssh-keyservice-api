@@ -8,10 +8,10 @@ resource "azurerm_private_dns_zone" "postgres" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-# resource "azurerm_private_dns_zone" "2" {
-#   name                = "dns_zone2"
-#   resource_group_name = azurerm_resource_group.this.name
-# }
+resource "azurerm_private_dns_zone" "redis" {
+  name                = "privatelink.redis.cache.windows.net"
+  resource_group_name = azurerm_resource_group.this.name
+}
 
 resource "azurerm_private_dns_zone_virtual_network_link" "example" {
   name                  = "exampleVnetZone.com"
@@ -50,4 +50,30 @@ resource "azurerm_service_plan" "sshkeyservice" {
   location            = azurerm_resource_group.this.location
   os_type             = "Linux"
   sku_name            = "B1"
+}
+
+resource "azurerm_key_vault" "example" {
+  # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
+  # checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
+  name                          = "kv-ssh-keyservice-prod"
+  location                      = azurerm_resource_group.this.location
+  resource_group_name           = azurerm_resource_group.this.name
+  enabled_for_disk_encryption   = true
+  tenant_id                     = data.azurerm_client_config.current.tenant_id
+  soft_delete_retention_days    = 7
+  purge_protection_enabled      = true
+  public_network_access_enabled = false
+
+  sku_name = "standard"
+
+  network_acls {
+    bypass         = "AzureServices"
+    default_action = "Deny"
+  }
+}
+
+resource "azurerm_user_assigned_identity" "gh-deploy" {
+  location            = azurerm_resource_group.this.location
+  name                = "id-ssh-keyservice-prod-gh-deploy"
+  resource_group_name = azurerm_resource_group.this.name
 }

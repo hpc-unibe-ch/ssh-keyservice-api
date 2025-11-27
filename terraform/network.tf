@@ -45,18 +45,3 @@ resource "azurerm_subnet_network_security_group_association" "postgres" {
   subnet_id                 = azurerm_subnet.postgres.id
   network_security_group_id = azurerm_network_security_group.example.id
 }
-
-# resource "azurerm_private_endpoint" "example" {
-#   name                = "postgresql-endpoint"
-#   location            = azurerm_resource_group.this.location
-#   resource_group_name = azurerm_resource_group.this.name
-#   subnet_id           = azurerm_subnet.service.id
-
-#   private_service_connection {
-#     name                           = "example-privateserviceconnection"
-#     private_connection_resource_id = azurerm_postgresql_flexible_server.example.id
-#     is_manual_connection           = false
-#     subresource_names              = ["postgresqlServer"]
-
-#   }
-# }
