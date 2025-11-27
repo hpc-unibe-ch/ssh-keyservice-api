@@ -1,5 +1,5 @@
 resource "azurerm_resource_group" "this" {
-  name     = "rg-ssh-terraform-keyservice"
+  name     = "rg-ssh-terraform-keyservice-test"
   location = "Switzerland North"
 }
 
