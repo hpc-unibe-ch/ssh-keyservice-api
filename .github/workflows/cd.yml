@@ -116,7 +116,7 @@ jobs:
       - name: Terraform Init
         run: |
           terraform \
-          -chdir="./build/terraform" \
+          -chdir="./build/terraform/" \
           init \
           -backend-config="resource_group_name=${{secrets.BACKEND_AZURE_RESOURCE_GROUP_NAME}}" \
           -backend-config="storage_account_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
@@ -126,7 +126,7 @@ jobs:
       - name: Terraform Apply
         run: |
           terraform \
-          -chdir="./build/terraform" \
+          -chdir="./build/terraform/" \
           apply \
           -input=false \
           -auto-approve \
