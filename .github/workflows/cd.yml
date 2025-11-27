@@ -122,6 +122,7 @@ jobs:
           -backend-config="storage_account_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
           -backend-config="container_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}" \
           -backend-config="key=terraform.tfstate"
+        working-directory: terraform
 
       - name: Terraform Apply
         run: |
@@ -131,3 +132,4 @@ jobs:
           -input=false \
           -auto-approve \
           tfplan
+        working-directory: terraform
