@@ -108,7 +108,9 @@ jobs:
       - name: Decrypt Module Artifact
         run: gpgtar --decrypt --directory ./ --gpg-args="--passphrase=${{ secrets.ARTIFACT_SECRET }} --batch" build.gpg
 
-      - run: ls -lA
+      - run: ls -lA ./build
+
+      - run: tree
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
