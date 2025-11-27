@@ -108,6 +108,8 @@ jobs:
       - name: Decrypt Module Artifact
         run: gpgtar --decrypt --directory ./ --gpg-args="--passphrase=${{ secrets.ARTIFACT_SECRET }} --batch" build.gpg
 
+      - run: ls -lA
+
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -116,7 +118,7 @@ jobs:
       - name: Terraform Init
         run: |
           terraform \
-          -chdir="./build/terraform/" \
+          -chdir="./terraform/" \
           init \
           -backend-config="resource_group_name=${{secrets.BACKEND_AZURE_RESOURCE_GROUP_NAME}}" \
           -backend-config="storage_account_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
