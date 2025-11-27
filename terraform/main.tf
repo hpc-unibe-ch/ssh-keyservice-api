@@ -18,7 +18,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "example" {
   private_dns_zone_name = azurerm_private_dns_zone.postgres.name
   virtual_network_id    = azurerm_virtual_network.example.id
   resource_group_name   = azurerm_resource_group.this.name
-  depends_on            = [azurerm_subnet.example]
+  depends_on            = [azurerm_subnet.postgres]
 }
 
 resource "azurerm_postgresql_flexible_server" "example" {
@@ -32,7 +32,6 @@ resource "azurerm_postgresql_flexible_server" "example" {
   administrator_login           = "psqladmin"
   administrator_password        = "H@Sh1CoR3!"
   zone                          = "1"
-
 
   storage_mb                   = 32768
   storage_tier                 = "P4"
