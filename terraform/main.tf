@@ -22,7 +22,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "example" {
 }
 
 resource "azurerm_postgresql_flexible_server" "example" {
-  name                          = "example-psqlflexibleserver"
+  name                          = "ssh-key-api-database-4597657890"
   resource_group_name           = azurerm_resource_group.this.name
   location                      = azurerm_resource_group.this.location
   version                       = "12"
