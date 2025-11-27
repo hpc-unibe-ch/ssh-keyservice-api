@@ -56,5 +56,7 @@ resource "azurerm_private_endpoint" "example" {
     name                           = "example-privateserviceconnection"
     private_connection_resource_id = azurerm_postgresql_flexible_server.example.id
     is_manual_connection           = false
+    subresource_names              = ["postgresqlServer"]
+
   }
 }

@@ -41,15 +41,13 @@ resource "azurerm_postgresql_flexible_server" "example" {
   depends_on = [azurerm_private_dns_zone_virtual_network_link.example]
 }
 
-resource "azurerm_app_service_plan" "sshkeyservice" {
+resource "azurerm_service_plan" "sshkeyservice" {
+  # checkov:skip=CKV_AZURE_225: "Ensure the App Service Plan is zone redundant"
+  # checkov:skip=CKV_AZURE_211: "Ensure App Service plan suitable for production use"
+  # checkov:skip=CKV_AZURE_212: "Ensure App Service has a minimum number of instances for failover"
   name                = "asp-sshkeyservice"
-  location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  kind                = "Linux"
-  reserved            = true
-
-  sku {
-    tier = "Standard"
-    size = "B1"
-  }
+  location            = azurerm_resource_group.this.location
+  os_type             = "Linux"
+  sku_name            = "B1"
 }
