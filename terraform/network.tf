@@ -36,34 +36,25 @@ resource "azurerm_subnet" "postgres" {
   }
 }
 
-resource "azurerm_private_link_service" "example" {
-  name                = "postgres-privatelink"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
+resource "azurerm_subnet_network_security_group_association" "service" {
+  subnet_id                 = azurerm_subnet.service.id
+  network_security_group_id = azurerm_network_security_group.example.id
+}
 
-  nat_ip_configuration {
-    name                       = "primary"
-    private_ip_address         = "10.0.1.2"
-    private_ip_address_version = "IPv4"
-    subnet_id                  = azurerm_subnet.service.id
-    primary                    = true
-  }
+resource "azurerm_subnet_network_security_group_association" "postgres" {
+  subnet_id                 = azurerm_subnet.postgres.id
+  network_security_group_id = azurerm_network_security_group.example.id
 }
 
 resource "azurerm_private_endpoint" "example" {
-  name                = "example-endpoint"
+  name                = "postgresql-endpoint"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
   subnet_id           = azurerm_subnet.service.id
 
   private_service_connection {
     name                           = "example-privateserviceconnection"
-    private_connection_resource_id = azurerm_private_link_service.example.id
+    private_connection_resource_id = azurerm_postgresql_flexible_server.example.id
     is_manual_connection           = false
   }
-}
-
-resource "azurerm_subnet_network_security_group_association" "example" {
-  subnet_id                 = azurerm_subnet.postgres.id
-  network_security_group_id = azurerm_network_security_group.example.id
 }
