@@ -79,6 +79,7 @@ jobs:
           terraform \
           show \
           tfplan
+        working-directory: terraform
 
   apply:
     needs: plan
