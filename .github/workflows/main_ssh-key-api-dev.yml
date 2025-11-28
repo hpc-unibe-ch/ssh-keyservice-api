@@ -7,7 +7,7 @@ name: Build and deploy Python app to Azure Web App - ssh-key-api-dev
 on:
   push:
     branches:
-      - main
+      - 51-add-support-for-terraform-deployments
   workflow_dispatch:
 
 jobs:
@@ -85,5 +85,5 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'ssh-key-api-dev'
+          app-name: 'ssh-keyservice-api-prod'
           slot-name: 'Production'
