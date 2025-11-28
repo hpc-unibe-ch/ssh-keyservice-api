@@ -8,11 +8,6 @@ resource "azurerm_private_dns_zone" "postgres" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-resource "azurerm_private_dns_zone" "redis" {
-  name                = "privatelink.redis.cache.windows.net"
-  resource_group_name = azurerm_resource_group.this.name
-}
-
 resource "azurerm_private_dns_zone_virtual_network_link" "example" {
   name                  = "exampleVnetZone.com"
   private_dns_zone_name = azurerm_private_dns_zone.postgres.name
@@ -75,6 +70,15 @@ resource "azurerm_role_assignment" "gh_api" {
   principal_id         = azurerm_user_assigned_identity.api-app.principal_id
 }
 
+resource "azurerm_federated_identity_credential" "api-app" {
+  name                = "gh-deployment-api"
+  resource_group_name = azurerm_resource_group.this.name
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = "https://token.actions.githubusercontent.com"
+  parent_id           = azurerm_user_assigned_identity.api-app.id
+  subject             = "repo:hpc-unibe-ch/ssh-keyservice-api:ref:refs/heads/51-add-support-for-terraform-deployments"
+}
+
 resource "azurerm_user_assigned_identity" "web-app" {
   location            = azurerm_resource_group.this.location
   name                = "id-ssh-keyservice-prod-web-app"
@@ -85,4 +89,13 @@ resource "azurerm_role_assignment" "gh_web" {
   scope                = azurerm_resource_group.this.id
   role_definition_name = "Website Contributor"
   principal_id         = azurerm_user_assigned_identity.web-app.principal_id
+}
+
+resource "azurerm_federated_identity_credential" "web-app" {
+  name                = "gh-deployment-web-app"
+  resource_group_name = azurerm_resource_group.this.name
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = "https://token.actions.githubusercontent.com"
+  parent_id           = azurerm_user_assigned_identity.web-app.id
+  subject             = "repo:hpc-unibe-ch/ssh-keyservice:ref:refs/heads/main"
 }
