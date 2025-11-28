@@ -82,7 +82,7 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   site_config {
-    health_check_path = "/" # Change to real health check path
+    health_check_path = "/healthcheck" # Change to real health check path
     http2_enabled     = true
     application_stack {
       python_version = 3.12
