@@ -27,7 +27,10 @@ resource "azurerm_linux_web_app" "api" {
   public_network_access_enabled = false
 
   identity {
-    type = "SystemAssigned"
+    type = "UserAssigned"
+    identity_ids = [
+      azurerm_user_assigned_identity.api-app.id
+    ]
   }
 
   auth_settings {
@@ -71,7 +74,10 @@ resource "azurerm_linux_web_app" "web" {
   public_network_access_enabled = false
 
   identity {
-    type = "SystemAssigned"
+    type = "UserAssigned"
+    identity_ids = [
+      azurerm_user_assigned_identity.web-app.id
+    ]
   }
 
   auth_settings {

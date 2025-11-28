@@ -63,28 +63,26 @@ resource "azurerm_key_vault" "example" {
   }
 }
 
-resource "azurerm_user_assigned_identity" "gh-deploy-api" {
+resource "azurerm_user_assigned_identity" "api-app" {
   location            = azurerm_resource_group.this.location
-  name                = "id-ssh-keyservice-prod-gh-deploy-api"
+  name                = "id-ssh-keyservice-prod-api-app"
   resource_group_name = azurerm_resource_group.this.name
 }
 
-# The Github Identity used to deploy terraform currently does not have the rights to create role assigments but code would work
-# resource "azurerm_role_assignment" "gh_api" {
-#   scope                = azurerm_resource_group.this.id
-#   role_definition_name = "Website Contributor"
-#   principal_id         = azurerm_user_assigned_identity.gh-deploy-api.principal_id
-# }
+resource "azurerm_role_assignment" "gh_api" {
+  scope                = azurerm_resource_group.this.id
+  role_definition_name = "Website Contributor"
+  principal_id         = azurerm_user_assigned_identity.api-app.principal_id
+}
 
-resource "azurerm_user_assigned_identity" "gh-deploy-web" {
+resource "azurerm_user_assigned_identity" "web-app" {
   location            = azurerm_resource_group.this.location
-  name                = "id-ssh-keyservice-prod-gh-deploy-web"
+  name                = "id-ssh-keyservice-prod-web-app"
   resource_group_name = azurerm_resource_group.this.name
 }
 
-# The Github Identity used to deploy terraform currently does not have the rights to create role assigments but code would work
-# resource "azurerm_role_assignment" "gh_web" {
-#   scope                = azurerm_resource_group.this.id
-#   role_definition_name = "Website Contributor"
-#   principal_id         = azurerm_user_assigned_identity.gh-deploy-web.principal_id
-# }
+resource "azurerm_role_assignment" "gh_web" {
+  scope                = azurerm_resource_group.this.id
+  role_definition_name = "Website Contributor"
+  principal_id         = azurerm_user_assigned_identity.web-app.principal_id
+}
