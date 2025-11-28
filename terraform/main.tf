@@ -80,7 +80,7 @@ resource "azurerm_user_assigned_identity" "gh-deploy-api" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-resource "azurerm_role_assignment" "example_reader" {
+resource "azurerm_role_assignment" "gh_api" {
   scope                = azurerm_resource_group.this.location
   role_definition_name = "Website Contributer"
   principal_id         = azurerm_user_assigned_identity.gh-deploy-api.principal_id
@@ -92,7 +92,7 @@ resource "azurerm_user_assigned_identity" "gh-deploy-web" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-resource "azurerm_role_assignment" "example_reader" {
+resource "azurerm_role_assignment" "gh_web" {
   scope                = azurerm_resource_group.this.location
   role_definition_name = "Website Contributer"
   principal_id         = azurerm_user_assigned_identity.gh-deploy-web.principal_id
