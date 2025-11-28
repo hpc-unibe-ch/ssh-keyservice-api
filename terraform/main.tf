@@ -74,8 +74,26 @@ resource "azurerm_key_vault" "example" {
   }
 }
 
-resource "azurerm_user_assigned_identity" "gh-deploy" {
+resource "azurerm_user_assigned_identity" "gh-deploy-api" {
   location            = azurerm_resource_group.this.location
-  name                = "id-ssh-keyservice-prod-gh-deploy"
+  name                = "id-ssh-keyservice-prod-gh-deploy-api"
   resource_group_name = azurerm_resource_group.this.name
+}
+
+resource "azurerm_role_assignment" "example_reader" {
+  scope                = azurerm_resource_group.this.location
+  role_definition_name = "Website Contributer"
+  principal_id         = azurerm_user_assigned_identity.gh-deploy-api.principal_id
+}
+
+resource "azurerm_user_assigned_identity" "gh-deploy-web" {
+  location            = azurerm_resource_group.this.location
+  name                = "id-ssh-keyservice-prod-gh-deploy-web"
+  resource_group_name = azurerm_resource_group.this.name
+}
+
+resource "azurerm_role_assignment" "example_reader" {
+  scope                = azurerm_resource_group.this.location
+  role_definition_name = "Website Contributer"
+  principal_id         = azurerm_user_assigned_identity.gh-deploy-web.principal_id
 }
