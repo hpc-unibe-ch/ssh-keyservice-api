@@ -53,6 +53,58 @@ resource "azurerm_service_plan" "sshkeyservice" {
   sku_name            = "B1"
 }
 
+resource "azurerm_linux_web_app" "api" {
+  # checkov:skip=CKV_AZURE_17: "Ensure the web app has 'Client Certificates (Incoming client certificates)' set"
+  # checkov:skip=CKV_AZURE_16: "Ensure that Register with Azure Active Directory is enabled on App Service"
+  # checkov:skip=CKV_AZURE_66: "Ensure that App service enables failed request tracing"
+  # checkov:skip=CKV_AZURE_63: "Ensure that App service enables HTTP logging"
+  # checkov:skip=CKV_AZURE_88: "Ensure that app services use Azure Files"
+  # checkov:skip=CKV_AZURE_78: "Ensure FTP deployments are disabled"
+  name                      = "ssh-keyservice-api-prod"
+  resource_group_name       = azurerm_resource_group.this.name
+  location                  = azurerm_resource_group.this.location
+  service_plan_id           = azurerm_service_plan.sshkeyservice.id
+  https_only                = true
+  virtual_network_subnet_id = azurerm_subnet.app.id
+  # key_vault_reference_identity_id = azurerm_key_vault.example.id
+  public_network_access_enabled = false
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  auth_settings {
+    enabled = true
+  }
+
+  logs {
+    detailed_error_messages = true
+  }
+
+  site_config {
+    health_check_path = "/" # Change to real health check path
+    http2_enabled     = true
+    application_stack {
+      python_version = 3.12
+    }
+  }
+
+  connection_string {
+    name  = "test"
+    type  = "PostgreSQL"
+    value = azurerm_postgresql_flexible_server.example.id
+  }
+}
+
+# resource "azurerm_linux_web_app" "web" {
+#   name                = "ssh-keyservice-web-prod"
+#   resource_group_name = azurerm_resource_group.this.name
+#   location            = azurerm_resource_group.this.location
+#   service_plan_id     = azurerm_service_plan.sshkeyservice.id
+
+#   site_config {}
+# }
+
 resource "azurerm_key_vault" "example" {
   # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
   # checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
@@ -80,11 +132,12 @@ resource "azurerm_user_assigned_identity" "gh-deploy-api" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-resource "azurerm_role_assignment" "gh_api" {
-  scope                = azurerm_resource_group.this.id
-  role_definition_name = "Website Contributor"
-  principal_id         = azurerm_user_assigned_identity.gh-deploy-api.principal_id
-}
+# The Github Identity used to deploy terraform currently does not have the rights to create role assigments but code would work
+# resource "azurerm_role_assignment" "gh_api" {
+#   scope                = azurerm_resource_group.this.id
+#   role_definition_name = "Website Contributor"
+#   principal_id         = azurerm_user_assigned_identity.gh-deploy-api.principal_id
+# }
 
 resource "azurerm_user_assigned_identity" "gh-deploy-web" {
   location            = azurerm_resource_group.this.location
@@ -92,8 +145,9 @@ resource "azurerm_user_assigned_identity" "gh-deploy-web" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-resource "azurerm_role_assignment" "gh_web" {
-  scope                = azurerm_resource_group.this.id
-  role_definition_name = "Website Contributor"
-  principal_id         = azurerm_user_assigned_identity.gh-deploy-web.principal_id
-}
+# The Github Identity used to deploy terraform currently does not have the rights to create role assigments but code would work
+# resource "azurerm_role_assignment" "gh_web" {
+#   scope                = azurerm_resource_group.this.id
+#   role_definition_name = "Website Contributor"
+#   principal_id         = azurerm_user_assigned_identity.gh-deploy-web.principal_id
+# }
