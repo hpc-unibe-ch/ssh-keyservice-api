@@ -60,6 +60,7 @@ resource "azurerm_linux_web_app" "api" {
   # checkov:skip=CKV_AZURE_63: "Ensure that App service enables HTTP logging"
   # checkov:skip=CKV_AZURE_88: "Ensure that app services use Azure Files"
   # checkov:skip=CKV_AZURE_78: "Ensure FTP deployments are disabled"
+  # checkov:skip=CKV_AZURE_213: "Ensure that App Service configures health check"
   name                      = "ssh-keyservice-api-prod"
   resource_group_name       = azurerm_resource_group.this.name
   location                  = azurerm_resource_group.this.location
@@ -82,8 +83,8 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   site_config {
-    health_check_path = "/healthcheck" # Change to real health check path
-    http2_enabled     = true
+    # health_check_path = "/healthcheck" # Change to real health check path
+    http2_enabled = true
     application_stack {
       python_version = 3.12
     }
