@@ -76,7 +76,7 @@ resource "azurerm_federated_identity_credential" "api-app" {
   audience            = ["api://AzureADTokenExchange"]
   issuer              = "https://token.actions.githubusercontent.com"
   parent_id           = azurerm_user_assigned_identity.api-app.id
-  subject             = "repo:hpc-unibe-ch/ssh-keyservice-api:ref:refs/heads/51-add-support-for-terraform-deployments"
+  subject             = "repo:hpc-unibe-ch/ssh-keyservice-api:environment:Production"
 }
 
 resource "azurerm_user_assigned_identity" "web-app" {
@@ -97,5 +97,5 @@ resource "azurerm_federated_identity_credential" "web-app" {
   audience            = ["api://AzureADTokenExchange"]
   issuer              = "https://token.actions.githubusercontent.com"
   parent_id           = azurerm_user_assigned_identity.web-app.id
-  subject             = "repo:hpc-unibe-ch/ssh-keyservice:ref:refs/heads/main"
+  subject             = "repo:hpc-unibe-ch/ssh-keyservice:environment:Production"
 }
