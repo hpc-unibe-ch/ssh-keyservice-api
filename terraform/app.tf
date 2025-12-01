@@ -52,7 +52,7 @@ resource "azurerm_linux_web_app" "api" {
   connection_string {
     name  = "pgdb"
     type  = "PostgreSQL"
-    value = azurerm_postgresql_flexible_server.example.id
+    value = azurerm_postgresql_flexible_server.postgresql-db-01.id
   }
 }
 
