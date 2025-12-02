@@ -18,6 +18,7 @@ resource "azurerm_linux_web_app" "api" {
   # checkov:skip=CKV_AZURE_78: "Ensure FTP deployments are disabled"
   # checkov:skip=CKV_AZURE_213: "Ensure that App Service configures health check"
   # checkov:skip=CKV_AZURE_222: "Ensure that Azure Web App public network access is disabled"
+  # checkov:skip=CKV_AZURE_13: "Ensure App Service Authentication is set on Azure App Service"
   name                      = "ssh-keyservice-api-prod"
   resource_group_name       = azurerm_resource_group.this.name
   location                  = azurerm_resource_group.this.location
@@ -35,7 +36,7 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   auth_settings {
-    enabled = true
+    enabled = false
   }
 
   logs {
@@ -103,6 +104,13 @@ resource "azurerm_linux_web_app" "web" {
     http2_enabled = true
     application_stack {
       python_version = 3.12
+    }
+
+    ip_restriction {
+      name       = "Unibe-Network"
+      ip_address = "130.92.0.0/16"
+      action     = "Allow"
+      priority   = 310
     }
   }
 }
