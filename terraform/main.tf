@@ -24,21 +24,21 @@ resource "random_password" "postgresql_admin" {
   numeric = true
 }
 
-resource "azurerm_key_vault_secret" "postgresql_admin_login" {
-  name            = "postgresql-admin-login"
-  value           = "psqladmin"
-  key_vault_id    = azurerm_key_vault.vault-01.id
-  expiration_date = "2030-12-30T20:00:00Z"
-  content_type    = "text/plain"
-}
+# resource "azurerm_key_vault_secret" "postgresql_admin_login" {
+#   name            = "postgresql-admin-login"
+#   value           = "psqladmin"
+#   key_vault_id    = azurerm_key_vault.vault-01.id
+#   expiration_date = "2030-12-30T20:00:00Z"
+#   content_type    = "text/plain"
+# }
 
-resource "azurerm_key_vault_secret" "postgresql_admin_password" {
-  name            = "postgresql-admin-password"
-  value           = random_password.postgresql_admin.result
-  key_vault_id    = azurerm_key_vault.vault-01.id
-  expiration_date = "2030-12-30T20:00:00Z"
-  content_type    = "text/plain"
-}
+# resource "azurerm_key_vault_secret" "postgresql_admin_password" {
+#   name            = "postgresql-admin-password"
+#   value           = random_password.postgresql_admin.result
+#   key_vault_id    = azurerm_key_vault.vault-01.id
+#   expiration_date = "2030-12-30T20:00:00Z"
+#   content_type    = "text/plain"
+# }
 
 resource "azurerm_key_vault" "vault-01" {
   # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
@@ -70,11 +70,11 @@ resource "azurerm_postgresql_flexible_server" "postgresql-db-01" {
   delegated_subnet_id           = azurerm_subnet.postgres.id
   private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
   public_network_access_enabled = false
-  administrator_login           = azurerm_key_vault_secret.postgresql_admin_login.value
-  administrator_password        = azurerm_key_vault_secret.postgresql_admin_password.value
-  # administrator_login    = "pgadmin"
-  # administrator_password = "jbc124asd"
-  zone = "1"
+  # administrator_login           = azurerm_key_vault_secret.postgresql_admin_login.value
+  # administrator_password        = azurerm_key_vault_secret.postgresql_admin_password.value
+  administrator_login    = "pgadmin"
+  administrator_password = "jbc124asd"
+  zone                   = "1"
 
   storage_mb                   = 32768
   storage_tier                 = "P4"
