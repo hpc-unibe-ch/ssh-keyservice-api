@@ -56,6 +56,7 @@ resource "azurerm_key_vault" "vault-01" {
   soft_delete_retention_days    = 7
   purge_protection_enabled      = true
   public_network_access_enabled = false
+  rbac_authorization_enabled    = true
 
   sku_name = "standard"
 
