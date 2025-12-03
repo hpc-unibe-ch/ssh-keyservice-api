@@ -45,7 +45,8 @@ resource "azurerm_linux_web_app" "api" {
 
   site_config {
     # health_check_path = "/healthcheck" # Change to real health check path
-    http2_enabled = true
+    http2_enabled    = true
+    app_command_line = "entrypoint.sh"
     application_stack {
       python_version = 3.12
     }
@@ -56,6 +57,12 @@ resource "azurerm_linux_web_app" "api" {
       action     = "Allow"
       priority   = 310
     }
+  }
+
+  app_settings = {
+    AZURE_KEY_VAULT_URL               = azurerm_key_vault.vault-01.vault_uri
+    SCM_DO_BUILD_DURING_DEPLOYMENT    = true
+    AZURE_POSTGRESQL_CONNECTIONSTRING = local.postgres_connection_string
   }
 
   connection_string {
@@ -101,7 +108,8 @@ resource "azurerm_linux_web_app" "web" {
 
   site_config {
     # health_check_path = "/healthcheck" # Change to real health check path
-    http2_enabled = true
+    http2_enabled    = true
+    app_command_line = "entrypoint.sh"
     application_stack {
       python_version = 3.12
     }
@@ -112,5 +120,11 @@ resource "azurerm_linux_web_app" "web" {
       action     = "Allow"
       priority   = 310
     }
+  }
+
+  app_settings = {
+    AZURE_KEY_VAULT_URL            = azurerm_key_vault.vault-01.vault_uri
+    SCM_DO_BUILD_DURING_DEPLOYMENT = true
+    AZURE_API_BASE_URL             = "https://${azurerm_linux_web_app.web.default_hostname}"
   }
 }
