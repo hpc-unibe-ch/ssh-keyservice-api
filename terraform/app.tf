@@ -61,7 +61,7 @@ resource "azurerm_linux_web_app" "api" {
 
   app_settings = {
     AZURE_KEY_VAULT_URL               = azurerm_key_vault.vault-01.vault_uri
-    SCM_DO_BUILD_DURING_DEPLOYMENT    = true
+    SCM_DO_BUILD_DURING_DEPLOYMENT    = 1
     AZURE_POSTGRESQL_CONNECTIONSTRING = local.postgres_connection_string
   }
 
@@ -124,7 +124,7 @@ resource "azurerm_linux_web_app" "web" {
 
   app_settings = {
     AZURE_KEY_VAULT_URL            = azurerm_key_vault.vault-01.vault_uri
-    SCM_DO_BUILD_DURING_DEPLOYMENT = true
+    SCM_DO_BUILD_DURING_DEPLOYMENT = 1
     AZURE_API_BASE_URL             = "https://${azurerm_linux_web_app.api.default_hostname}"
   }
 }
