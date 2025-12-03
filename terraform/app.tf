@@ -125,6 +125,6 @@ resource "azurerm_linux_web_app" "web" {
   app_settings = {
     AZURE_KEY_VAULT_URL            = azurerm_key_vault.vault-01.vault_uri
     SCM_DO_BUILD_DURING_DEPLOYMENT = true
-    AZURE_API_BASE_URL             = "https://${azurerm_linux_web_app.web.default_hostname}"
+    AZURE_API_BASE_URL             = "https://${azurerm_linux_web_app.api.default_hostname}"
   }
 }
