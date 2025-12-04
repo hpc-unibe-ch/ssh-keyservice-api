@@ -98,7 +98,7 @@ resource "azurerm_postgresql_flexible_server_database" "ssh-key-api-dev-database
   name      = "ssh-key-api-dev-database"
   server_id = azurerm_postgresql_flexible_server.postgresql-db-01.id
   charset   = "UTF8"
-  collation = "en_US.UTF8"
+  collation = "en_US.utf8"
 
   depends_on = [azurerm_postgresql_flexible_server.postgresql-db-01]
 }
