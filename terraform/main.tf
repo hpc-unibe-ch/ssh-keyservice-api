@@ -49,14 +49,15 @@ resource "azurerm_key_vault" "vault-01" {
   # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
   # checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
   # checkov:skip=CKV2_AZURE_32: "Ensure private endpoint is configured to key vault"
-  name                        = "kv-ssh-keyservice-api"
-  location                    = azurerm_resource_group.this.location
-  resource_group_name         = azurerm_resource_group.this.name
-  enabled_for_disk_encryption = true
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
-  soft_delete_retention_days  = 7
-  purge_protection_enabled    = true
-  rbac_authorization_enabled  = true
+  name                          = "kv-ssh-keyservice-api"
+  location                      = azurerm_resource_group.this.location
+  resource_group_name           = azurerm_resource_group.this.name
+  enabled_for_disk_encryption   = true
+  tenant_id                     = data.azurerm_client_config.current.tenant_id
+  soft_delete_retention_days    = 7
+  purge_protection_enabled      = true
+  rbac_authorization_enabled    = true
+  public_network_access_enabled = true
 
   sku_name = "standard"
 
@@ -91,6 +92,15 @@ resource "azurerm_postgresql_flexible_server" "postgresql-db-01" {
 
   sku_name   = "B_Standard_B1ms"
   depends_on = [azurerm_private_dns_zone_virtual_network_link.example]
+}
+
+resource "azurerm_postgresql_flexible_server_database" "ssh-key-api-dev-database" {
+  name      = "ssh-key-api-dev-database"
+  server_id = azurerm_postgresql_flexible_server.postgresql-db-01.id
+  charset   = "UTF8"
+  collation = "en_US.UTF8"
+
+  depends_on = [azurerm_postgresql_flexible_server.postgresql-db-01]
 }
 
 resource "azurerm_user_assigned_identity" "api-app" {
