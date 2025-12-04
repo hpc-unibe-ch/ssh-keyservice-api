@@ -48,7 +48,7 @@ resource "azurerm_key_vault" "vault-01" {
   # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
   # checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
   # checkov:skip=CKV2_AZURE_32: "Ensure private endpoint is configured to key vault"
-  name                          = "kv-ssh-keyservice-prod"
+  name                          = "kv-ssh-keyservice-api"
   location                      = azurerm_resource_group.this.location
   resource_group_name           = azurerm_resource_group.this.name
   enabled_for_disk_encryption   = true
