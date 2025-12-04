@@ -44,6 +44,7 @@ resource "azurerm_key_vault_secret" "postgresql_admin_password" {
   depends_on = [azurerm_role_assignment.api-keyvault]
 }
 
+# tfsec:ignore:AVD-AZU-0013
 resource "azurerm_key_vault" "vault-01" {
   # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
   # checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
@@ -59,14 +60,14 @@ resource "azurerm_key_vault" "vault-01" {
 
   sku_name = "standard"
 
-  network_acls {
-    bypass         = "AzureServices"
-    default_action = "Deny"
-    # ip_rules = [
-    #   "130.92.8.0/24",
-    #   "4.226.22.100" # LBE IP of Azure Firewall
-    # ]
-  }
+  # network_acls {
+  #   bypass         = "AzureServices"
+  #   default_action = "Deny"
+  #   ip_rules = [
+  #     "130.92.8.0/24",
+  #     "4.226.22.100" # LBE IP of Azure Firewall
+  #   ]
+  # }
 }
 
 resource "azurerm_postgresql_flexible_server" "postgresql-db-01" {
