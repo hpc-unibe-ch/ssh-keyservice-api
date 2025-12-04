@@ -1,5 +1,5 @@
 resource "azurerm_resource_group" "this" {
-  name     = "rg-ssh-terraform-keyservice-test"
+  name     = "rg-ssh-keyservice-api"
   location = "Switzerland North"
 }
 
@@ -114,31 +114,4 @@ resource "azurerm_federated_identity_credential" "api-app" {
   issuer              = "https://token.actions.githubusercontent.com"
   parent_id           = azurerm_user_assigned_identity.api-app.id
   subject             = "repo:hpc-unibe-ch/ssh-keyservice-api:environment:Production"
-}
-
-resource "azurerm_user_assigned_identity" "web-app" {
-  location            = azurerm_resource_group.this.location
-  name                = "id-ssh-keyservice-prod-web-app"
-  resource_group_name = azurerm_resource_group.this.name
-}
-
-resource "azurerm_role_assignment" "gh_web" {
-  scope                = azurerm_resource_group.this.id
-  role_definition_name = "Website Contributor"
-  principal_id         = azurerm_user_assigned_identity.web-app.principal_id
-}
-
-resource "azurerm_role_assignment" "web-keyvault" {
-  scope                = azurerm_key_vault.vault-01.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.web-app.principal_id
-}
-
-resource "azurerm_federated_identity_credential" "web-app" {
-  name                = "gh-deployment-web-app"
-  resource_group_name = azurerm_resource_group.this.name
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  parent_id           = azurerm_user_assigned_identity.web-app.id
-  subject             = "repo:hpc-unibe-ch/ssh-keyservice:environment:Production"
 }

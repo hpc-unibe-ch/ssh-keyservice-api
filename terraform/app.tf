@@ -61,7 +61,6 @@ resource "azurerm_linux_web_app" "api" {
 
   app_settings = {
     AZURE_KEY_VAULT_URL               = azurerm_key_vault.vault-01.vault_uri
-    SCM_DO_BUILD_DURING_DEPLOYMENT    = 1
     AZURE_POSTGRESQL_CONNECTIONSTRING = local.postgres_connection_string
   }
 
@@ -69,62 +68,5 @@ resource "azurerm_linux_web_app" "api" {
     name  = "pgdb"
     type  = "PostgreSQL"
     value = azurerm_postgresql_flexible_server.postgresql-db-01.id
-  }
-}
-
-resource "azurerm_linux_web_app" "web" {
-  # checkov:skip=CKV_AZURE_17: "Ensure the web app has 'Client Certificates (Incoming client certificates)' set"
-  # checkov:skip=CKV_AZURE_16: "Ensure that Register with Azure Active Directory is enabled on App Service"
-  # checkov:skip=CKV_AZURE_66: "Ensure that App service enables failed request tracing"
-  # checkov:skip=CKV_AZURE_63: "Ensure that App service enables HTTP logging"
-  # checkov:skip=CKV_AZURE_88: "Ensure that app services use Azure Files"
-  # checkov:skip=CKV_AZURE_78: "Ensure FTP deployments are disabled"
-  # checkov:skip=CKV_AZURE_213: "Ensure that App Service configures health check"
-  # checkov:skip=CKV_AZURE_222: "Ensure that Azure Web App public network access is disabled"
-  # checkov:skip=CKV_AZURE_13: "Ensure App Service Authentication is set on Azure App Service"
-  name                      = "ssh-keyservice-web-prod"
-  resource_group_name       = azurerm_resource_group.this.name
-  location                  = azurerm_resource_group.this.location
-  service_plan_id           = azurerm_service_plan.sshkeyservice.id
-  https_only                = true
-  virtual_network_subnet_id = azurerm_subnet.app.id
-  # key_vault_reference_identity_id = azurerm_key_vault.example.id
-  public_network_access_enabled = true
-
-  identity {
-    type = "UserAssigned"
-    identity_ids = [
-      azurerm_user_assigned_identity.web-app.id
-    ]
-  }
-
-  auth_settings {
-    enabled = false
-  }
-
-  logs {
-    detailed_error_messages = true
-  }
-
-  site_config {
-    # health_check_path = "/healthcheck" # Change to real health check path
-    http2_enabled    = true
-    app_command_line = "entrypoint.sh"
-    application_stack {
-      python_version = 3.12
-    }
-
-    ip_restriction {
-      name       = "Unibe-Network"
-      ip_address = "130.92.0.0/16"
-      action     = "Allow"
-      priority   = 310
-    }
-  }
-
-  app_settings = {
-    AZURE_KEY_VAULT_URL            = azurerm_key_vault.vault-01.vault_uri
-    SCM_DO_BUILD_DURING_DEPLOYMENT = 1
-    AZURE_API_BASE_URL             = "https://${azurerm_linux_web_app.api.default_hostname}"
   }
 }
