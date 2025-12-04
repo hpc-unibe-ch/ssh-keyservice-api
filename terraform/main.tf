@@ -44,7 +44,6 @@ resource "azurerm_key_vault_secret" "postgresql_admin_password" {
   depends_on = [azurerm_role_assignment.api-keyvault]
 }
 
-# trivy:ignore:AVD-AZU-0013 Reason: this resource is intentionally open
 resource "azurerm_key_vault" "vault-01" {
   # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
   # checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
@@ -61,10 +60,10 @@ resource "azurerm_key_vault" "vault-01" {
 
   sku_name = "standard"
 
-  # network_acls {
-  #   bypass         = "AzureServices"
-  #   default_action = "Deny"
-  # }
+  network_acls {
+    bypass         = "AzureServices"
+    default_action = "Deny"
+  }
 }
 
 resource "azurerm_postgresql_flexible_server" "postgresql-db-01" {
