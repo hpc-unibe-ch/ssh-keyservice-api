@@ -48,21 +48,24 @@ resource "azurerm_key_vault" "vault-01" {
   # checkov:skip=CKV_AZURE_189: "Ensure that Azure Key Vault disables public network access"
   # checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
   # checkov:skip=CKV2_AZURE_32: "Ensure private endpoint is configured to key vault"
-  name                          = "kv-ssh-keyservice-api"
-  location                      = azurerm_resource_group.this.location
-  resource_group_name           = azurerm_resource_group.this.name
-  enabled_for_disk_encryption   = true
-  tenant_id                     = data.azurerm_client_config.current.tenant_id
-  soft_delete_retention_days    = 7
-  purge_protection_enabled      = true
-  public_network_access_enabled = false
-  rbac_authorization_enabled    = true
+  name                        = "kv-ssh-keyservice-api"
+  location                    = azurerm_resource_group.this.location
+  resource_group_name         = azurerm_resource_group.this.name
+  enabled_for_disk_encryption = true
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  soft_delete_retention_days  = 7
+  purge_protection_enabled    = true
+  rbac_authorization_enabled  = true
 
   sku_name = "standard"
 
   network_acls {
     bypass         = "AzureServices"
     default_action = "Deny"
+    # ip_rules = [
+    #   "130.92.8.0/24",
+    #   "4.226.22.100" # LBE IP of Azure Firewall
+    # ]
   }
 }
 
