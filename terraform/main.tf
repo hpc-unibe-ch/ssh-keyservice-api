@@ -31,7 +31,7 @@ resource "azurerm_key_vault_secret" "postgresql_admin_login" {
   expiration_date = "2030-12-30T20:00:00Z"
   content_type    = "text/plain"
 
-  depends_on = [azurerm_role_assignment.web-keyvault]
+  depends_on = [azurerm_role_assignment.api-keyvault]
 }
 
 resource "azurerm_key_vault_secret" "postgresql_admin_password" {
