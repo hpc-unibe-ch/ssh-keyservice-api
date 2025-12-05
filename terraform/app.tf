@@ -47,7 +47,7 @@ resource "azurerm_linux_web_app" "api" {
     # health_check_path = "/healthcheck" # Change to real health check path
     http2_enabled                     = true
     app_command_line                  = "entrypoint.sh"
-    scm_ip_restriction_default_action = true
+    scm_ip_restriction_default_action = "Deny"
     application_stack {
       python_version = 3.12
     }
