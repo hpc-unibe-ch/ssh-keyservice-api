@@ -73,6 +73,10 @@ resource "azurerm_key_vault_secret" "app_client_id" {
 
   depends_on = [azurerm_role_assignment.api-keyvault]
 }
+import {
+  id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/APP-CLIENT-ID/8b90addb151d4559ac76394729b87abb"
+  to = azurerm_key_vault_secret.app_client_id
+}
 
 # tfsec:ignore:AVD-AZU-0017
 resource "azurerm_key_vault_secret" "tennant_id" {
