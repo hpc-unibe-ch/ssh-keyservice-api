@@ -56,9 +56,9 @@ resource "azurerm_key_vault_secret" "postgresql_admin_password" {
 }
 
 # tfsec:ignore:AVD-AZU-0017
-resource "azurerm_key_vault_secret" "APP_CLIENT_ID" {
+resource "azurerm_key_vault_secret" "app_client_id" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
-  name         = "APP_CLIENT_ID"
+  name         = "APP-CLIENT-ID"
   value        = azurerm_linux_web_app.api.id
   key_vault_id = azurerm_key_vault.vault-01.id
   content_type = "text/plain"
@@ -67,9 +67,9 @@ resource "azurerm_key_vault_secret" "APP_CLIENT_ID" {
 }
 
 # tfsec:ignore:AVD-AZU-0017
-resource "azurerm_key_vault_secret" "TENANT_ID" {
+resource "azurerm_key_vault_secret" "tennant_id" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
-  name         = "APP_CLIENT_ID"
+  name         = "TENANT-ID"
   value        = data.azurerm_client_config.current.tenant_id
   key_vault_id = azurerm_key_vault.vault-01.id
   content_type = "text/plain"
@@ -78,9 +78,9 @@ resource "azurerm_key_vault_secret" "TENANT_ID" {
 }
 
 # tfsec:ignore:AVD-AZU-0017
-resource "azurerm_key_vault_secret" "VALID_API_KEYS" {
+resource "azurerm_key_vault_secret" "valid_api_keys" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
-  name         = "VALID_API_KEYS"
+  name         = "VALID-API-KEYS"
   key_vault_id = azurerm_key_vault.vault-01.id
   value = join(",", [
     "sk_live_abc123xyz456",
@@ -93,9 +93,9 @@ resource "azurerm_key_vault_secret" "VALID_API_KEYS" {
 }
 
 # tfsec:ignore:AVD-AZU-0017
-resource "azurerm_key_vault_secret" "TRUSTED_CORS_ORIGINS" {
+resource "azurerm_key_vault_secret" "trusted_cors_origins" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
-  name         = "TRUSTED_CORS_ORIGINS"
+  name         = "TRUSTED-CORS-ORIGINS"
   key_vault_id = azurerm_key_vault.vault-01.id
   value = join(",", [
     "https://ondemand.hpc.unibe.ch",
