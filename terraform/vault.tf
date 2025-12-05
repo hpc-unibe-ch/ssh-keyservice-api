@@ -60,7 +60,7 @@ resource "azurerm_key_vault_secret" "postgresql_admin_password" {
 }
 import {
   id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/postgresql-admin-password/cd0cdef77c66422783a4c2bdc05d22ec"
-  to = azurerm_key_vault_secret.postgresql_admin_login
+  to = azurerm_key_vault_secret.postgresql_admin_password
 }
 
 # tfsec:ignore:AVD-AZU-0017
@@ -86,7 +86,7 @@ resource "azurerm_key_vault_secret" "tennant_id" {
 }
 import {
   id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/TENANT-ID/f7d870cf26e6424082b770db485d4066"
-  to = azurerm_key_vault_secret.postgresql_admin_login
+  to = azurerm_key_vault_secret.tennant_id
 }
 
 # tfsec:ignore:AVD-AZU-0017
@@ -105,7 +105,7 @@ resource "azurerm_key_vault_secret" "valid_api_keys" {
 }
 import {
   id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/VALID-API-KEYS/27a0b170294849869f08869f4854fcf1"
-  to = azurerm_key_vault_secret.postgresql_admin_login
+  to = azurerm_key_vault_secret.valid_api_keys
 }
 
 # tfsec:ignore:AVD-AZU-0017
@@ -123,5 +123,5 @@ resource "azurerm_key_vault_secret" "trusted_cors_origins" {
 }
 import {
   id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/TRUSTED-CORS-ORIGINS/3ba73b6298114c26b9e5e94b713ce74a"
-  to = azurerm_key_vault_secret.postgresql_admin_login
+  to = azurerm_key_vault_secret.trusted_cors_origins
 }
