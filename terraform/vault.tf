@@ -131,3 +131,9 @@ resource "random_password" "api_key" {
   length  = 64
   special = false
 }
+
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}

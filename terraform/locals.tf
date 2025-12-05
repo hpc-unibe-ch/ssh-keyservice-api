@@ -3,5 +3,5 @@ locals {
 }
 
 locals {
-  db_name = "ssh-key-api-database-${random_string.db_suffix.result}"
+  db_name = "ssh-key-api-database-${random_string.suffix.result}"
 }
