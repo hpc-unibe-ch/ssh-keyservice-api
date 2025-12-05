@@ -43,6 +43,10 @@ resource "azurerm_key_vault_secret" "postgresql_admin_login" {
 
   depends_on = [azurerm_role_assignment.api-keyvault]
 }
+import {
+  id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/postgresql-admin-login/4f510f64fc3e40358f9030fc98090d54"
+  to = azurerm_key_vault_secret.postgresql_admin_login
+}
 
 # tfsec:ignore:AVD-AZU-0017
 resource "azurerm_key_vault_secret" "postgresql_admin_password" {
@@ -53,6 +57,10 @@ resource "azurerm_key_vault_secret" "postgresql_admin_password" {
   content_type = "text/plain"
 
   depends_on = [azurerm_role_assignment.api-keyvault]
+}
+import {
+  id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/postgresql-admin-password/cd0cdef77c66422783a4c2bdc05d22ec"
+  to = azurerm_key_vault_secret.postgresql_admin_login
 }
 
 # tfsec:ignore:AVD-AZU-0017
@@ -76,6 +84,10 @@ resource "azurerm_key_vault_secret" "tennant_id" {
 
   depends_on = [azurerm_role_assignment.api-keyvault]
 }
+import {
+  id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/TENANT-ID/f7d870cf26e6424082b770db485d4066"
+  to = azurerm_key_vault_secret.postgresql_admin_login
+}
 
 # tfsec:ignore:AVD-AZU-0017
 resource "azurerm_key_vault_secret" "valid_api_keys" {
@@ -91,6 +103,10 @@ resource "azurerm_key_vault_secret" "valid_api_keys" {
 
   depends_on = [azurerm_role_assignment.api-keyvault]
 }
+import {
+  id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/VALID-API-KEYS/27a0b170294849869f08869f4854fcf1"
+  to = azurerm_key_vault_secret.postgresql_admin_login
+}
 
 # tfsec:ignore:AVD-AZU-0017
 resource "azurerm_key_vault_secret" "trusted_cors_origins" {
@@ -104,4 +120,8 @@ resource "azurerm_key_vault_secret" "trusted_cors_origins" {
   content_type = "text/plain"
 
   depends_on = [azurerm_role_assignment.api-keyvault]
+}
+import {
+  id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/TRUSTED-CORS-ORIGINS/3ba73b6298114c26b9e5e94b713ce74a"
+  to = azurerm_key_vault_secret.postgresql_admin_login
 }
