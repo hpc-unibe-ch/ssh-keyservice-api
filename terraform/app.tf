@@ -45,23 +45,39 @@ resource "azurerm_linux_web_app" "api" {
 
   site_config {
     # health_check_path = "/healthcheck" # Change to real health check path
-    http2_enabled    = true
-    app_command_line = "entrypoint.sh"
+    http2_enabled                     = true
+    app_command_line                  = "entrypoint.sh"
+    scm_ip_restriction_default_action = true
     application_stack {
       python_version = 3.12
     }
 
     ip_restriction {
-      name       = "Unibe-Network"
+      name       = "unibe-network"
       ip_address = "130.92.0.0/16"
       action     = "Allow"
       priority   = 310
+    }
+
+    ip_restriction {
+      name                      = "db-network"
+      virtual_network_subnet_id = azurerm_subnet.app.id
+      action                    = "Allow"
+      priority                  = 309
+    }
+
+    ip_restriction {
+      name                      = "app-network"
+      virtual_network_subnet_id = azurerm_subnet.postgres.id
+      action                    = "Allow"
+      priority                  = 308
     }
   }
 
   app_settings = {
     AZURE_KEY_VAULT_URL               = azurerm_key_vault.vault-01.vault_uri
     AZURE_POSTGRESQL_CONNECTIONSTRING = local.postgres_connection_string
+    AZURE_CLIENT_ID                   = azurerm_user_assigned_identity.api-app.id
   }
 
   connection_string {
