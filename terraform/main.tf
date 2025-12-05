@@ -8,17 +8,17 @@ resource "azurerm_private_dns_zone" "postgres" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "example" {
-  name                  = "exampleVnetZone.com"
+resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
+  name                  = "postgres-dns-zone-link"
   private_dns_zone_name = azurerm_private_dns_zone.postgres.name
-  virtual_network_id    = azurerm_virtual_network.example.id
+  virtual_network_id    = azurerm_virtual_network.main-vnet.id
   resource_group_name   = azurerm_resource_group.this.name
   depends_on            = [azurerm_subnet.postgres]
 }
 
 resource "azurerm_postgresql_flexible_server" "postgresql-db-01" {
   # checkov:skip=CKV2_AZURE_57: "Ensure PostgreSQL Flexible Server is configured with private endpoint"
-  name                          = "ssh-key-api-database-4597657890"
+  name                          = local.db_name
   resource_group_name           = azurerm_resource_group.this.name
   location                      = azurerm_resource_group.this.location
   version                       = "12"
@@ -27,16 +27,14 @@ resource "azurerm_postgresql_flexible_server" "postgresql-db-01" {
   public_network_access_enabled = false
   administrator_login           = azurerm_key_vault_secret.postgresql_admin_login.value
   administrator_password        = azurerm_key_vault_secret.postgresql_admin_password.value
-  # administrator_login    = "pgadmin"
-  # administrator_password = "jbc124asd"
-  zone = "1"
+  zone                          = "1"
 
   storage_mb                   = 32768
   storage_tier                 = "P4"
   geo_redundant_backup_enabled = true
 
   sku_name   = "B_Standard_B1ms"
-  depends_on = [azurerm_private_dns_zone_virtual_network_link.example]
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
 }
 
 resource "azurerm_postgresql_flexible_server_database" "ssh-key-api-dev-database" {

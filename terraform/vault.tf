@@ -25,14 +25,6 @@ resource "azurerm_key_vault" "vault-01" {
   # }
 }
 
-resource "random_password" "postgresql_admin" {
-  length  = 16
-  special = true
-  upper   = true
-  lower   = true
-  numeric = true
-}
-
 # tfsec:ignore:AVD-AZU-0017
 resource "azurerm_key_vault_secret" "postgresql_admin_login" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
@@ -99,9 +91,7 @@ resource "azurerm_key_vault_secret" "valid_api_keys" {
   name         = "VALID-API-KEYS"
   key_vault_id = azurerm_key_vault.vault-01.id
   value = join(",", [
-    "sk_live_abc123xyz456",
-    "sk_live_def789ghi012",
-    "sk_test_jkl345mno678"
+    random_password.api_key.result
   ])
   content_type = "text/plain"
 
@@ -118,8 +108,7 @@ resource "azurerm_key_vault_secret" "trusted_cors_origins" {
   name         = "TRUSTED-CORS-ORIGINS"
   key_vault_id = azurerm_key_vault.vault-01.id
   value = join(",", [
-    "https://ondemand.hpc.unibe.ch",
-    "https://app.example.com"
+    "https://ondemand.hpc.unibe.ch"
   ])
   content_type = "text/plain"
 
@@ -128,4 +117,17 @@ resource "azurerm_key_vault_secret" "trusted_cors_origins" {
 import {
   id = "https://kv-ssh-keyservice-api.vault.azure.net/secrets/TRUSTED-CORS-ORIGINS/3ba73b6298114c26b9e5e94b713ce74a"
   to = azurerm_key_vault_secret.trusted_cors_origins
+}
+
+resource "random_password" "postgresql_admin" {
+  length  = 16
+  special = true
+  upper   = true
+  lower   = true
+  numeric = true
+}
+
+resource "random_password" "api_key" {
+  length  = 64
+  special = false
 }
