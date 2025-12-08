@@ -43,28 +43,28 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   site_config {
-    http2_enabled                     = true
-    app_command_line                  = "entrypoint.sh"
-    scm_ip_restriction_default_action = "Deny"
+    http2_enabled                 = true
+    app_command_line              = "entrypoint.sh"
+    ip_restriction_default_action = "Deny"
     application_stack {
       python_version = 3.12
     }
 
-    scm_ip_restriction {
+    ip_restriction {
       name       = "unibe-network"
       ip_address = "130.92.0.0/16"
       action     = "Allow"
       priority   = 310
     }
 
-    scm_ip_restriction {
+    ip_restriction {
       name                      = "db-network"
       virtual_network_subnet_id = azurerm_subnet.app.id
       action                    = "Allow"
       priority                  = 309
     }
 
-    scm_ip_restriction {
+    ip_restriction {
       name                      = "app-network"
       virtual_network_subnet_id = azurerm_subnet.postgres.id
       action                    = "Allow"
