@@ -13,7 +13,6 @@ resource "azurerm_linux_web_app" "api" {
   # checkov:skip=CKV_AZURE_17: "Ensure the web app has 'Client Certificates (Incoming client certificates)' set"
   # checkov:skip=CKV_AZURE_16: "Ensure that Register with Azure Active Directory is enabled on App Service"
   # checkov:skip=CKV_AZURE_66: "Ensure that App service enables failed request tracing"
-  # checkov:skip=CKV_AZURE_63: "Ensure that App service enables HTTP logging"
   # checkov:skip=CKV_AZURE_88: "Ensure that app services use Azure Files"
   # checkov:skip=CKV_AZURE_78: "Ensure FTP deployments are disabled"
   # checkov:skip=CKV_AZURE_213: "Ensure that App Service configures health check"
@@ -40,6 +39,12 @@ resource "azurerm_linux_web_app" "api" {
 
   logs {
     detailed_error_messages = true
+    http_logs {
+      file_system {
+        retention_in_days = 7
+        retention_in_mb   = 35
+      }
+    }
   }
 
   site_config {
