@@ -7,7 +7,7 @@ name: Build and deploy Python app to Azure Web App - ssh-key-api-dev
 on:
   push:
     branches:
-      - main
+      - 51-add-support-for-terraform-deployments
   workflow_dispatch:
 
 jobs:
@@ -77,14 +77,13 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B105E7AC892F4FD6B7DDED2565176D7B }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C8DDEF30384749CFB48B958290E3DB74 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B9EA392480D0481FB43EA6EB5CBB2FEC }}
+          client-id: ${{ secrets.TEST_CLIENT_ID }}
+          tenant-id: ${{ secrets.TEST_TENANT_ID }}
+          subscription-id: ${{ secrets.TEST_SUBSCRIPTION_ID }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'ssh-key-api-dev'
+          app-name: 'ssh-keyservice-api-prod'
           slot-name: 'Production'
-

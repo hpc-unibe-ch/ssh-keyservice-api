@@ -1,0 +1,135 @@
+---
+name: Continuous Delivery
+on:
+  push:
+    branches:
+      - 51-add-support-for-terraform-deployments
+  workflow_dispatch:
+
+jobs:
+  plan:
+    name: Plan with Terraform
+    runs-on:
+      ubuntu-latest
+    concurrency: mgmt-tfstate
+    environment: plan
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+      ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      ARM_USE_AZUREAD: true
+      ARM_USE_OIDC: true
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: |
+          terraform \
+          init \
+          -backend-config="resource_group_name=${{secrets.BACKEND_AZURE_RESOURCE_GROUP_NAME}}" \
+          -backend-config="storage_account_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
+          -backend-config="container_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}" \
+          -backend-config="key=terraform.tfstate"
+        working-directory: terraform
+
+      - name: Terraform Plan for Apply
+        run: |
+          # shellcheck disable=SC2086
+          terraform \
+          plan \
+          -out=tfplan \
+          -input=false
+        working-directory: terraform
+
+      - name: Create Module Artifact
+        run: |
+          $stagingDirectory = "build"
+          $rootModuleFolder = "${{inputs.root_module_folder_relative_path}}"
+          New-Item -Path . -Name $stagingDirectory -ItemType "directory"
+          Copy-Item -Path "./*" -Exclude @(".git", "./terraform/.terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
+
+          $rootModuleFolderTerraformFolder = Join-Path -Path "./$stagingDirectory" -ChildPath $rootModuleFolder -AdditionalChildPath ".terraform"
+          if(Test-Path -Path $rootModuleFolderTerraformFolder) {
+            Remove-Item -Path $rootModuleFolderTerraformFolder -Recurse -Force
+          }
+
+        shell: pwsh
+
+      - name: Encrypt Module Artifact
+        run: gpgtar --encrypt --symmetric --output build.gpg --gpg-args="--passphrase=${{ secrets.ARTIFACT_SECRET }} --batch" ./build
+
+      - name: Publish Module Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: build
+          path: ./build.gpg
+
+      - name: Show the Plan for Review
+        run: |
+          terraform \
+          show \
+          tfplan
+        working-directory: terraform
+
+  apply:
+    needs: plan
+    name: Apply with Terraform
+    runs-on:
+      ubuntu-latest
+    concurrency: mgmt-tfstate
+    environment: apply
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+      ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      ARM_USE_AZUREAD: true
+      ARM_USE_OIDC: true
+      AZAPI_RETRY_GET_AFTER_PUT_MAX_TIME: "60m" # Accounts for eventually consistent management group permissions propagation
+
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: build
+
+      - name: Decrypt Module Artifact
+        run: gpgtar --decrypt --directory ./ --gpg-args="--passphrase=${{ secrets.ARTIFACT_SECRET }} --batch" build.gpg
+
+      - run: rm -rf ./build/terraform/.terraform
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: |
+          terraform \
+          init \
+          -backend-config="resource_group_name=${{secrets.BACKEND_AZURE_RESOURCE_GROUP_NAME}}" \
+          -backend-config="storage_account_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
+          -backend-config="container_name=${{secrets.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}" \
+          -backend-config="key=terraform.tfstate"
+        working-directory: ./build/terraform
+
+      - name: Terraform Apply
+        run: |
+          terraform \
+          apply \
+          -input=false \
+          -auto-approve \
+          tfplan
+        working-directory: ./build/terraform

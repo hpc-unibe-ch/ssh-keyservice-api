@@ -17,3 +17,28 @@ This app is designed to address these problems. A secure web front end allows us
 [ssh-keyservice-api (this repo)](https://github.com/hpc-unibe-ch/ssh-keyservice-api) - Backend API
 [ssh-keyservice](https://github.com/hpc-unibe-ch/ssh-keyservice) - Frontend Webapp
 
+<!-- BEGIN_TF_DOCS -->
+## Requirements
+
+No requirements.
+
+## Providers
+
+No providers.
+
+## Modules
+
+No modules.
+
+## Resources
+
+No resources.
+
+## Inputs
+
+No inputs.
+
+## Outputs
+
+No outputs.
+<!-- END_TF_DOCS -->

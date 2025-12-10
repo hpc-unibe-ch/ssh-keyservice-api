@@ -1,0 +1,47 @@
+---
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        stages: [pre-commit]
+      - id: end-of-file-fixer
+        exclude: '(/secrets|/ssh_keyservice_api)'
+        stages: [pre-commit]
+      - id: check-added-large-files
+        stages: [pre-commit]
+      - id: check-yaml
+        args:
+          - "--allow-multiple-documents"
+        stages: [pre-commit]
+      - id: check-json
+        stages: [pre-commit]
+      - id: check-toml
+        stages: [pre-commit]
+      - id: check-shebang-scripts-are-executable
+        exclude: '(/ssh_keyservice_api|entrypoint\.sh)'
+        stages: [pre-commit]
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+      - id: terraform_checkov
+        args:
+          - --args=--framework=terraform
+      - id: terraform_trivy
+        args:
+          - --hook-config=--parallelism-limit=1
+
+  - repo: https://github.com/terraform-docs/terraform-docs
+    rev: "v0.19.0"
+    hooks:
+      - id: terraform-docs-system
+        args: ["-c", "./.terraform-docs.yml", "."]
