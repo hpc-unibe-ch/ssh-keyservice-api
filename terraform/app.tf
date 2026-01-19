@@ -89,3 +89,72 @@ resource "azurerm_linux_web_app" "api" {
     value = azurerm_postgresql_flexible_server.postgresql-db-01.id
   }
 }
+
+resource "azurerm_linux_web_app" "frontend" {
+  # checkov:skip=CKV_AZURE_17: "Ensure the web app has 'Client Certificates (Incoming client certificates)' set"
+  # checkov:skip=CKV_AZURE_16: "Ensure that Register with Azure Active Directory is enabled on App Service"
+  # checkov:skip=CKV_AZURE_66: "Ensure that App service enables failed request tracing"
+  # checkov:skip=CKV_AZURE_88: "Ensure that app services use Azure Files"
+  # checkov:skip=CKV_AZURE_78: "Ensure FTP deployments are disabled"
+  # checkov:skip=CKV_AZURE_213: "Ensure that App Service configures health check"
+  # checkov:skip=CKV_AZURE_222: "Ensure that Azure Web App public network access is disabled"
+  # checkov:skip=CKV_AZURE_13: "Ensure App Service Authentication is set on Azure App Service"
+  name                          = "ssh-keyservice-frontend-prod"
+  resource_group_name           = azurerm_resource_group.this.name
+  location                      = azurerm_resource_group.this.location
+  service_plan_id               = azurerm_service_plan.sshkeyservice.id
+  https_only                    = true
+  virtual_network_subnet_id     = azurerm_subnet.app.id
+  public_network_access_enabled = true
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [
+      azurerm_user_assigned_identity.frontend-app.id
+    ]
+  }
+
+  auth_settings {
+    enabled = false
+  }
+
+  logs {
+    detailed_error_messages = true
+    http_logs {
+      file_system {
+        retention_in_days = 7
+        retention_in_mb   = 35
+      }
+    }
+  }
+
+  site_config {
+    http2_enabled                 = true
+    app_command_line              = "entrypoint.sh"
+    ip_restriction_default_action = "Deny"
+    application_stack {
+      python_version = 3.12
+    }
+
+    ip_restriction {
+      name       = "unibe-network"
+      ip_address = "130.92.0.0/16"
+      action     = "Allow"
+      priority   = 310
+    }
+
+    ip_restriction {
+      name                      = "db-network"
+      virtual_network_subnet_id = azurerm_subnet.app.id
+      action                    = "Allow"
+      priority                  = 309
+    }
+
+    ip_restriction {
+      name                      = "app-network"
+      virtual_network_subnet_id = azurerm_subnet.postgres.id
+      action                    = "Allow"
+      priority                  = 308
+    }
+  }
+}
