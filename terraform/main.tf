@@ -75,27 +75,27 @@ resource "azurerm_federated_identity_credential" "api-app" {
 
 resource "azurerm_user_assigned_identity" "frontend-app" {
   location            = azurerm_resource_group.this.location
-  name                = "id-ssh-keyservice-prod-api-app"
+  name                = "id-ssh-keyservice-prod-frontend-app"
   resource_group_name = azurerm_resource_group.this.name
 }
 
 resource "azurerm_role_assignment" "gh-frontend" {
   scope                = azurerm_resource_group.this.id
   role_definition_name = "Website Contributor"
-  principal_id         = azurerm_user_assigned_identity.api-app.principal_id
+  principal_id         = azurerm_user_assigned_identity.frontend-app.principal_id
 }
 
 resource "azurerm_role_assignment" "api-frontend" {
   scope                = azurerm_key_vault.vault-01.id
   role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.api-app.principal_id
+  principal_id         = azurerm_user_assigned_identity.frontend-app.principal_id
 }
 
 resource "azurerm_federated_identity_credential" "api-frontend" {
-  name                = "gh-deployment-api"
+  name                = "gh-deployment-frontend"
   resource_group_name = azurerm_resource_group.this.name
   audience            = ["api://AzureADTokenExchange"]
   issuer              = "https://token.actions.githubusercontent.com"
-  parent_id           = azurerm_user_assigned_identity.api-app.id
+  parent_id           = azurerm_user_assigned_identity.frontend-app.id
   subject             = "repo:hpc-unibe-ch/ssh-keyservice-api:environment:Production"
 }
