@@ -91,11 +91,11 @@ resource "azurerm_role_assignment" "api-frontend" {
   principal_id         = azurerm_user_assigned_identity.frontend-app.principal_id
 }
 
-resource "azurerm_federated_identity_credential" "api-frontend" {
+resource "azurerm_federated_identity_credential" "frontend-app" {
   name                = "gh-deployment-frontend"
   resource_group_name = azurerm_resource_group.this.name
   audience            = ["api://AzureADTokenExchange"]
   issuer              = "https://token.actions.githubusercontent.com"
   parent_id           = azurerm_user_assigned_identity.frontend-app.id
-  subject             = "repo:hpc-unibe-ch/ssh-keyservice-api:environment:Production"
+  subject             = "repo:hpc-unibe-ch/ssh-keyservice:environment:Production"
 }
