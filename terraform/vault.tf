@@ -108,8 +108,29 @@ resource "azurerm_key_vault_secret" "frontend_app_client_id" {
   depends_on = [azurerm_role_assignment.api-keyvault]
 }
 
+# tfsec:ignore:AVD-AZU-0017
+resource "azurerm_key_vault_secret" "flask_secret_key" {
+  # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
+  name         = "FLASK-SECRET-KEY"
+  key_vault_id = azurerm_key_vault.vault-01.id
+  value = join(",", [
+    random_password.flask_secret_key.result
+  ])
+  content_type = "text/plain"
+
+  depends_on = [azurerm_role_assignment.api-keyvault]
+}
+
 resource "random_password" "postgresql_admin" {
   length  = 16
+  special = true
+  upper   = true
+  lower   = true
+  numeric = true
+}
+
+resource "random_password" "flask_secret_key" {
+  length  = 10
   special = true
   upper   = true
   lower   = true
