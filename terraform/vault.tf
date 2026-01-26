@@ -39,7 +39,7 @@ resource "azurerm_key_vault_secret" "postgresql_admin_password" {
 }
 
 # tfsec:ignore:AVD-AZU-0017
-resource "azurerm_key_vault_secret" "app_client_id" {
+resource "azurerm_key_vault_secret" "api_app_client_id" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
   name         = "APP-CLIENT-ID"
   value        = azurerm_linux_web_app.api.id
@@ -87,7 +87,7 @@ resource "azurerm_key_vault_secret" "trusted_cors_origins" {
 }
 
 # tfsec:ignore:AVD-AZU-0017
-resource "azurerm_key_vault_secret" "app_client_secret" {
+resource "azurerm_key_vault_secret" "frontend_app_client_secret" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
   name         = "APP-CLIENT-SECRET"
   key_vault_id = azurerm_key_vault.vault-01.id
@@ -98,7 +98,7 @@ resource "azurerm_key_vault_secret" "app_client_secret" {
 }
 
 # tfsec:ignore:AVD-AZU-0017
-resource "azurerm_key_vault_secret" "app_client_id" {
+resource "azurerm_key_vault_secret" "frontend_app_client_id" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
   name         = "APP-CLIENT-ID"
   key_vault_id = azurerm_key_vault.vault-01.id
