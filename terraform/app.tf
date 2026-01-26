@@ -162,5 +162,6 @@ resource "azurerm_linux_web_app" "frontend" {
     AZURE_KEY_VAULT_URL = azurerm_key_vault.vault-01.vault_uri
     AZURE_CLIENT_ID     = azurerm_user_assigned_identity.api-app.client_id
     AZURE_API_BASE_URL  = "https://${azurerm_linux_web_app.api.default_hostname}"
+    AZURE_TENNANT_ID    = data.azurerm_client_config.current.tenant_id
   }
 }
