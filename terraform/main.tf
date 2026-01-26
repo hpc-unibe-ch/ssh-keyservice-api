@@ -85,7 +85,7 @@ resource "azurerm_role_assignment" "gh-frontend" {
   principal_id         = azurerm_user_assigned_identity.frontend-app.principal_id
 }
 
-resource "azurerm_role_assignment" "api-frontend" {
+resource "azurerm_role_assignment" "frontend-keyvault" {
   scope                = azurerm_key_vault.vault-01.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.frontend-app.principal_id
