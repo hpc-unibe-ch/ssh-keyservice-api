@@ -89,7 +89,7 @@ resource "azurerm_key_vault_secret" "trusted_cors_origins" {
 # tfsec:ignore:AVD-AZU-0017
 resource "azurerm_key_vault_secret" "frontend_app_client_secret" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
-  name         = "APP-CLIENT-SECRET"
+  name         = "FRONTEND-APP-CLIENT-SECRET"
   key_vault_id = azurerm_key_vault.vault-01.id
   value        = var.app_client_secret
   content_type = "text/plain"
@@ -100,7 +100,7 @@ resource "azurerm_key_vault_secret" "frontend_app_client_secret" {
 # tfsec:ignore:AVD-AZU-0017
 resource "azurerm_key_vault_secret" "frontend_app_client_id" {
   # checkov:skip=CKV_AZURE_41: "Ensure that the expiration date is set on all secrets"
-  name         = "APP-CLIENT-ID"
+  name         = "FRONTEND-APP-CLIENT-ID"
   key_vault_id = azurerm_key_vault.vault-01.id
   value        = var.app_client_id
   content_type = "text/plain"
